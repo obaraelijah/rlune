@@ -1,6 +1,7 @@
 # rlune
 
 [![GitHub License](https://img.shields.io/github/license/obaraelijah/rlune)](https://github.com/obaraelijah/rlune/blob/main/LICENSE)
+[![Crates.io Version](https://img.shields.io/crates/v/rlune)](https://crates.io/crates/rlune)
 [![Crates.io Total Downloads](https://img.shields.io/crates/d/rlune)](https://crates.io/crates/rlune)
 [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/obaraelijah/rlune/build-and-test.yml)](https://github.com/obaraelijah/rlune/actions/workflows/build-and-test.yml)
 

@@ -2,5 +2,8 @@
 name = "rlune"
 version = "0.1.0"
 edition = "2024"
+authors = ["Elijah Samson <git@obara.dev>"]
+license = "MPL-2.0"
+description = "Core-component for the rlune web-framework"
 
 [dependencies]

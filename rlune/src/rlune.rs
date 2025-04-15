@@ -12,7 +12,6 @@ use tracing_subscriber::EnvFilter;
 use crate::core::Module;
 use crate::error::RluneError;
 
-
 pub struct Rlune {
     modules: Vec<Box<dyn Module>>,
 }

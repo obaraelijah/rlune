@@ -1,0 +1,11 @@
+[package]
+name = "rlune-core"
+version = "0.1.0"
+edition = "2021"
+authors = ["Elijah Samson <git@obaraelijah.dev>"]
+license = "MPL-2.0"
+description = "Core concepts for rlune like trait definitions"
+ 
+[dependencies]
+# Webserver
+axum = { version = "~0.7", default-features = false }

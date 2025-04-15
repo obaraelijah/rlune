@@ -7,3 +7,26 @@ license = "MPL-2.0"
 description = "Core-component for the rlune web-framework"
 
 [dependencies]
+# Webserver
+axum = { version = "~0.7" }
+
+# Core
+rlune-core = { version = "~0.1", path = "../rlune-core" }
+
+# Contrib modules
+rlune-contrib-tracing = { version = "~0.1", path = "../contrib/rlune-contrib-tracing", optional = true }
+
+# Error handling
+thiserror = { version = "~1" }
+
+# Async runtime
+tokio = { version = ">=1.23.1", features = ["net"] }
+
+# Tracing
+tracing = { version = "~0.1" }
+tracing-subscriber = { version = "~0.3", features = ["env-filter"] }
+
+[features]
+contrib = [
+    "dep:rlune-contrib-tracing",
+]

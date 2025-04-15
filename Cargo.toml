@@ -1,5 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "./rlune",
+    "./rlune", 
+    "./rlune-core",
+    "./contrib/rlune-contrib-tracing",
+    "./example/blog",
 ]

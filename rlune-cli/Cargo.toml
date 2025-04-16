@@ -1,0 +1,33 @@
+[package]
+name = "rlune-cli"
+version = "0.1.0"
+edition = "2021"
+authors = ["Elijah Samson <git@obaraelijah.dev>"]
+description = "CLI tool for rlune"
+license = "MPL-2.0"
+
+[[bin]]
+name = "rlune"
+path = "./src/main.rs"
+
+[dependencies]
+# Error handling
+anyhow = { version = "~1" }
+
+# CLI parser
+clap = { version = "~4", features = ["derive"] }
+ 
+# Conversion of casing of strings
+convert_case = { version = "~0.6" }
+ 
+# Embed directory
+include_dir = { version = "~0.7" }
+ 
+# Colors!
+owo-colors = { version = "~4" }
+ 
+# Rust TokenTree parser
+syn = { version = "~2" }
+ 
+# Templating
+tera = { version = "~1" }

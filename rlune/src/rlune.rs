@@ -52,12 +52,6 @@ impl Rlune {
 
 // Private methods
 impl Rlune {
-    fn init_stage(&self) {
-        for m in &self.modules {
-            m.init_stage();
-        }
-    }
-
     fn router_stage(&self) -> Router {
         let mut root = Router::new();
 

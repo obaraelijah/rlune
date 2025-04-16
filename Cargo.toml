@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "./rlune", 
+    "./rlune-cli",
     "./rlune-core",
     "./contrib/rlune-contrib-tracing",
     "./example/blog",

@@ -1,9 +1,11 @@
 [workspace]
 resolver = "2"
 members = [
-    "./rlune", 
-    "./rlune-cli",
-    "./rlune-core",
-    "./contrib/rlune-contrib-tracing",
-    "./example/blog",
+    "rlune", 
+    "rlune-cli",
+    "rlune-core",
+    "contrib/rlune-contrib-tracing",
+    "swaggapi",
+    "swaggapi-macro",
+    "example/blog",  
 ]

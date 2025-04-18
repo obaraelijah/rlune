@@ -16,9 +16,9 @@ use tera::Tera;
 
 use crate::output::print_info;
 
-static CRATE_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/templates/crate");
+static _CRATE_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/templates/crate");
 
-/// Initialize a new galvyn project
+/// Initialize a new rlunes project
 pub fn run_init(name: String, path: String) -> anyhow::Result<()> {
     let p = Path::new(&path);
 

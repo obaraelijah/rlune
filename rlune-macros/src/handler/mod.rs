@@ -122,38 +122,42 @@ pub fn handler(
         _ => None,
     });
     quote! {
-        #[allow(non_upper_case_globals, missing_docs)]
-        #vis static #func_ident: ::swaggapi::internals::SwaggapiHandler =  {
-            #tokens
+        #[allow(non_camel_case_types)]
+        #vis struct #func_ident;
+        impl ::rlune::swaggapi::handler::Handler for #func_ident {
+            fn meta(&self) -> ::rlune::swaggapi::handler::HandlerMeta {
+                const N: usize =  0 #(+ {let _ = stringify!(#argument_type); 1})*;
+                static FNS: [::std::option::Option<::rlune::swaggapi::handler_argument::HandlerArgumentFns>; N] = [#(
+                    ::rlune::swaggapi::handler_argument::macro_helper::get_handler_argument_fns(
+                        || ::rlune::swaggapi::handler_argument::macro_helper::TraitProbe::<#argument_type>::new().get_handler_argument(),
+                        || ::rlune::swaggapi::handler_argument::macro_helper::TraitProbe::<#argument_type>::new().is_handler_argument(),
+                    ),
+                )*];
+                const _: () = {#(
+                    ::rlune::swaggapi::handler_argument::macro_helper::check_handler_argument(
+                        || ::rlune::swaggapi::handler_argument::macro_helper::TraitProbe::<#argument_type>::new().get_handler_argument()
+                    );
+                )*};
 
-            const N: usize =  0 #(+ {let _ = stringify!(#argument_type); 1})*;
-            static FNS: [::std::option::Option<::swaggapi::handler_argument::HandlerArgumentFns>; N] = [#(
-                ::swaggapi::handler_argument::macro_helper::get_handler_argument_fns(
-                    || ::swaggapi::handler_argument::macro_helper::TraitProbe::<#argument_type>::new().get_handler_argument(),
-                    || ::swaggapi::handler_argument::macro_helper::TraitProbe::<#argument_type>::new().is_handler_argument(),
-                ),
-            )*];
-            const _: () = {#(
-                ::swaggapi::handler_argument::macro_helper::check_handler_argument(
-                    || ::swaggapi::handler_argument::macro_helper::TraitProbe::<#argument_type>::new().get_handler_argument()
-                );
-            )*};
-
-            ::swaggapi::internals::SwaggapiHandler {
-                method: ::swaggapi::internals::HttpMethod::#method,
-                path: #path,
-                deprecated: #deprecated,
-                doc: &[#(
-                    #doc,
-                )*],
-                ident: #ident,
-                tags: &#tags,
-                responses: <#return_type as ::swaggapi::as_responses::AsResponses>::responses,
-                handler_arguments: &FNS,
-                method_router: || ::swaggapi::re_exports::axum::routing::MethodRouter::new()
-                    .on(::swaggapi::internals::HttpMethod::#method.axum(), #func_ident),
+                ::rlune::swaggapi::handler::HandlerMeta {
+                    method: ::rlune::swaggapi::re_exports::axum::http::method::Method::#method,
+                    path: #path,
+                    deprecated: #deprecated,
+                    doc: &[#(
+                        #doc,
+                    )*],
+                    ident: #ident,
+                    tags: &#tags,
+                    responses: <#return_type as ::rlune::swaggapi::as_responses::AsResponses>::responses,
+                    handler_arguments: &FNS,
+                }
             }
+            fn method_router(&self) -> ::rlune::swaggapi::re_exports::axum::routing::MethodRouter {
+                #tokens
 
-        };
+                ::rlune::swaggapi::re_exports::axum::routing::MethodRouter::new()
+                    .on(::rlune::swaggapi::re_exports::axum::routing::MethodFilter::#method, #func_ident)
+            }
+        }
     }
 }

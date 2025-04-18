@@ -3,9 +3,9 @@ resolver = "2"
 members = [
     "rlune", 
     "rlune-cli",
+    "rlune-macros",
     "rlune-core",
     "contrib/rlune-contrib-tracing",
     "swaggapi",
-    "swaggapi-macro",
     "example/blog",  
 ]

@@ -26,6 +26,9 @@ tokio = { version = ">=1.23.1", features = ["net"] }
 tracing = { version = "~0.1" }
 tracing-subscriber = { version = "~0.3", features = ["env-filter"] }
 
+swaggapi = { version = "0.2.2", path = "../swaggapi" }
+rlune-macros = { version = "0.2.0", path = "../rlune-macros" }
+
 [features]
 contrib = [
     "dep:rlune-contrib-tracing",

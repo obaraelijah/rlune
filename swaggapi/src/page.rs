@@ -19,9 +19,9 @@ use regex::Regex;
 use schemars::schema::Schema;
 use schemars::JsonSchema;
 
-use crate::context::ContextHandler;
 use crate::internals::convert_schema;
 use crate::internals::SchemaGenerator;
+use crate::router::MutHandlerMeta;
 
 /// An implicit [`SwaggapiPage`] which will always contain your entire api
 pub static PAGE_OF_EVERYTHING: SwaggapiPage = SwaggapiPage::new();
@@ -239,7 +239,7 @@ impl SwaggapiPage {
     }
 
     /// Add a handler to this api page
-    pub(crate) fn add_handler(&self, handler: &ContextHandler) {
+    pub(crate) fn add_handler(&self, handler: &MutHandlerMeta) {
         let mut guard = self.state.lock().unwrap();
         let state = guard.get_or_insert_with(Default::default);
         state.last_build = None;

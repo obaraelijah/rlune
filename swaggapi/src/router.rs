@@ -14,14 +14,14 @@ use crate::internals::ptrset::PtrSet;
 use crate::SwaggapiPage;
 use crate::PAGE_OF_EVERYTHING;
 
-/// An `ApiContext` combines several [`SwaggapiHandler`] under a common path.
+/// An `RluneRouter` combines several [`SwaggapiHandler`] under a common path.
 ///
 /// It is also responsible for adding them to [`SwaggapiPage`]s once mounted to your application.
 #[derive(Debug)]
-pub struct ApiContext {
+pub struct RluneRouter {
     /* The same collection of handlers in swaggapi and framework specific representation */
     /// The contained handlers
-    handlers: Vec<ContextHandler>,
+    handlers: Vec<MutHandlerMeta>,
     /// The underlying axum router
     router: Router,
 
@@ -39,14 +39,14 @@ pub struct ApiContext {
     tags: Vec<&'static str>,
 }
 
-impl ApiContext {
-    /// Create a new context
+impl RluneRouter {
+    /// Create a new router
     ///
     /// It wraps an axum [`Router`] internally and should be added to your application's router using [`Router::merge`]:
     /// ```rust
     /// # use axum::Router;
-    /// # use swaggapi::ApiContext;
-    /// let app = Router::new().merge(ApiContext::new("/api"));
+    /// # use swaggapi::RluneRouter;
+    /// let app = Router::new().merge(RluneRouter::new("/api"));
     /// ```
     pub fn new() -> Self {
         Self {
@@ -58,23 +58,23 @@ impl ApiContext {
         }
     }
 
-    /// Create a new context with a tag
+    /// Create a new router with a tag
     ///
-    /// (Shorthand for `ApiContext::new().tag(...)`)
+    /// (Shorthand for `RluneRouter::new().tag(...)`)
     pub fn with_tag(tag: &'static str) -> Self {
         Self::new().tag(tag)
     }
 
-    /// Add a handler to the context
+    /// Add a handler to the router
     pub fn handler(mut self, handler: impl Handler) -> Self {
-        self.push_handler(ContextHandler::new(handler.meta()));
+        self.push_handler(MutHandlerMeta::new(handler.meta()));
         self.router = self
             .router
             .route(&handler.meta().path, handler.method_router());
         self
     }
 
-    /// Attach a [`SwaggapiPage`] this context's handlers will be added to
+    /// Attach a [`SwaggapiPage`] this router's handlers will be added to
     pub fn page(mut self, page: &'static SwaggapiPage) -> Self {
         self.pages.push(page);
         for handler in &mut self.handlers {
@@ -83,7 +83,7 @@ impl ApiContext {
         self
     }
 
-    /// Add a tag to all of this context's handlers
+    /// Add a tag to all of this router's handlers
     pub fn tag(mut self, tag: &'static str) -> Self {
         self.tags.push(tag);
         for handler in &mut self.handlers {
@@ -92,8 +92,8 @@ impl ApiContext {
         self
     }
 
-    /// Adds a [`ContextHandler`] after adding this context's `path`, `tags` and `pages` to it
-    fn push_handler(&mut self, mut handler: ContextHandler) {
+    /// Adds a [`MutHandlerMeta`] after adding this router's `path`, `tags` and `pages` to it
+    fn push_handler(&mut self, mut handler: MutHandlerMeta) {
         if !self.path.is_empty() {
             handler.path = format!("{}{}", self.path, handler.path);
         }
@@ -133,7 +133,7 @@ impl ApiContext {
     }
 
     /// Calls [`Router::nest`] while preserving api information
-    pub fn nest(mut self, path: &str, other: ApiContext) -> Self {
+    pub fn nest(mut self, path: &str, other: RluneRouter) -> Self {
         for mut handler in other.handlers {
             // Code taken from `path_for_nested_route` in `axum/src/routing/path_router.rs`
             handler.path = if path.ends_with('/') {
@@ -151,7 +151,7 @@ impl ApiContext {
     }
 
     /// Calls [`Router::merge`] while preserving api information
-    pub fn merge(mut self, other: ApiContext) -> Self {
+    pub fn merge(mut self, other: RluneRouter) -> Self {
         for handler in other.handlers {
             self.push_handler(handler);
         }
@@ -159,7 +159,7 @@ impl ApiContext {
         self
     }
 
-    /// Apply a [`tower::Layer`] to all routes in the context.
+    /// Apply a [`tower::Layer`] to all routes in the router.
     ///
     /// See [`Router::layer`] for more details.
     pub fn layer<L>(mut self, layer: L) -> Self
@@ -174,7 +174,7 @@ impl ApiContext {
         self
     }
 
-    /// Apply a [`tower::Layer`] to the context that will only run if the request matches a route.
+    /// Apply a [`tower::Layer`] to the router that will only run if the request matches a route.
     ///
     /// See [`Router::route_layer`] for more details.
     pub fn route_layer<L>(mut self, layer: L) -> Self
@@ -190,15 +190,15 @@ impl ApiContext {
     }
 }
 
-impl From<ApiContext> for Router {
-    fn from(context: ApiContext) -> Self {
-        context.finish()
+impl From<RluneRouter> for Router {
+    fn from(router: RluneRouter) -> Self {
+        router.finish()
     }
 }
 
-/// A wrapped [`HandlerMeta`] used inside [`ApiContext`] to allow modifications.
+/// A wrapped [`HandlerMeta`] used inside [`RluneRouter`] to allow modifications.
 #[derive(Debug)]
-pub(crate) struct ContextHandler {
+pub(crate) struct MutHandlerMeta {
     /// The original unmodified [`HandlerMeta`]
     pub original: HandlerMeta,
 
@@ -211,8 +211,8 @@ pub(crate) struct ContextHandler {
     /// The pages the handler should be added to
     pub pages: PtrSet<'static, SwaggapiPage>,
 }
-impl ContextHandler {
-    /// Constructs a new `ContextHandler`
+impl MutHandlerMeta {
+    /// Constructs a new `MutHandlerMeta`
     pub fn new(original: HandlerMeta) -> Self {
         Self {
             path: original.path.to_string(),
@@ -222,7 +222,7 @@ impl ContextHandler {
         }
     }
 }
-impl Deref for ContextHandler {
+impl Deref for MutHandlerMeta {
     type Target = HandlerMeta;
 
     fn deref(&self) -> &Self::Target {

@@ -8,8 +8,8 @@ use axum::routing::Router;
 use tower::Layer;
 use tower::Service;
 
-use crate::handler::Handler;
 use crate::handler::HandlerMeta;
+use crate::handler::RluneHandler;
 use crate::internals::ptrset::PtrSet;
 use crate::SwaggapiPage;
 use crate::PAGE_OF_EVERYTHING;
@@ -17,11 +17,13 @@ use crate::PAGE_OF_EVERYTHING;
 /// An `RluneRouter` combines several [`SwaggapiHandler`] under a common path.
 ///
 /// It is also responsible for adding them to [`SwaggapiPage`]s once mounted to your application.
+///
+/// TODO: update these docs
 #[derive(Debug)]
 pub struct RluneRouter {
-    /* The same collection of handlers in swaggapi and framework specific representation */
     /// The contained handlers
     handlers: Vec<MutHandlerMeta>,
+
     /// The underlying axum router
     router: Router,
 
@@ -48,6 +50,8 @@ impl RluneRouter {
     /// # use swaggapi::RluneRouter;
     /// let app = Router::new().merge(RluneRouter::new("/api"));
     /// ```
+    ///
+    /// TODO: update these docs
     pub fn new() -> Self {
         Self {
             handlers: Vec::new(),
@@ -66,7 +70,7 @@ impl RluneRouter {
     }
 
     /// Add a handler to the router
-    pub fn handler(mut self, handler: impl Handler) -> Self {
+    pub fn handler(mut self, handler: impl RluneHandler) -> Self {
         self.push_handler(MutHandlerMeta::new(handler.meta()));
         self.router = self
             .router

@@ -120,6 +120,17 @@ pub fn handler(
         },
     };
 
+    let response_modifier = if let Some(body) = response_types.first() {
+        quote_spanned! {body.span()=>
+            ::rlune::swaggapi::get_metadata!(
+                ::rlune::swaggapi::handler::ResponseModifier,
+                #body
+            )
+        }
+    } else {
+        quote! { None }
+    };
+
     let response_parts = response_types.iter().map(|part| {
         quote_spanned! {part.span()=>
             ::rlune::swaggapi::get_metadata!(
@@ -189,6 +200,7 @@ pub fn handler(
                         x
                     },
                     request_body: #request_body,
+                    response_modifier: #response_modifier,
                     response_parts: {
                         let mut x = ::std::vec::Vec::new();
                         #(

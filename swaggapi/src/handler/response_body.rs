@@ -2,6 +2,8 @@ use axum::http::StatusCode;
 use mime::Mime;
 use schemars::schema::Schema;
 
+use crate::handler::response_part::ResponsePart;
+use crate::handler::response_part::ShouldBeResponsePart;
 use crate::schema_generator::SchemaGenerator;
 use crate::type_metadata::HasMetadata;
 use crate::type_metadata::ShouldHaveMetadata;
@@ -24,3 +26,6 @@ impl<T: ResponseBody> HasMetadata<ResponseBodyMetadata> for T {
         ResponseBodyMetadata { body: T::body }
     }
 }
+
+impl<T: ShouldBeResponseBody> ShouldBeResponsePart for T {}
+impl<T: ResponseBody> ResponsePart for T {}

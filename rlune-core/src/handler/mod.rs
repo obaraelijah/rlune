@@ -8,8 +8,8 @@ use self::request_body::RequestBodyMetadata;
 use self::request_part::RequestPartMetadata;
 use self::response_body::ResponseBodyMetadata;
 use self::response_part::ResponsePartMetadata;
-use crate::type_metadata::HasMetadata;
-use crate::type_metadata::ShouldHaveMetadata;
+use crate::macro_utils::type_metadata::HasMetadata;
+use crate::macro_utils::type_metadata::ShouldHaveMetadata;
 
 mod impls;
 pub mod request_body;

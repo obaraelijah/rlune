@@ -94,8 +94,8 @@ pub fn handler(
 
     let request_parts = request_types.iter().map(|part| {
         quote_spanned! {part.span()=>
-            ::rlune::swaggapi::get_metadata!(
-                ::rlune::swaggapi::handler::request_part::RequestPartMetadata,
+            ::rlune::core::get_metadata!(
+                ::rlune::core::handler::request_part::RequestPartMetadata,
                 #part
             )
         }
@@ -103,8 +103,8 @@ pub fn handler(
 
     let request_body = if let Some(body) = request_types.last() {
         quote_spanned! {body.span()=>
-            ::rlune::swaggapi::get_metadata!(
-                ::rlune::swaggapi::handler::request_body::RequestBodyMetadata,
+            ::rlune::core::get_metadata!(
+                ::rlune::core::handler::request_body::RequestBodyMetadata,
                 #body
             )
         }
@@ -122,8 +122,8 @@ pub fn handler(
 
     let response_modifier = if let Some(body) = response_types.first() {
         quote_spanned! {body.span()=>
-            ::rlune::swaggapi::get_metadata!(
-                ::rlune::swaggapi::handler::ResponseModifier,
+            ::rlune::core::get_metadata!(
+                ::rlune::core::handler::ResponseModifier,
                 #body
             )
         }
@@ -133,8 +133,8 @@ pub fn handler(
 
     let response_parts = response_types.iter().map(|part| {
         quote_spanned! {part.span()=>
-            ::rlune::swaggapi::get_metadata!(
-                ::rlune::swaggapi::handler::response_part::ResponsePartMetadata,
+            ::rlune::core::get_metadata!(
+                ::rlune::core::handler::response_part::ResponsePartMetadata,
                 #part
             )
         }
@@ -142,8 +142,8 @@ pub fn handler(
 
     let response_body = if let Some(body) = response_types.last() {
         quote_spanned! {body.span()=>
-            ::rlune::swaggapi::get_metadata!(
-                ::rlune::swaggapi::handler::response_body::ResponseBodyMetadata,
+            ::rlune::core::get_metadata!(
+                ::rlune::core::handler::response_body::ResponseBodyMetadata,
                 #body
             )
         }
@@ -181,10 +181,10 @@ pub fn handler(
     quote! {
         #[allow(non_camel_case_types)]
         #vis struct #func_ident;
-        impl ::rlune::swaggapi::handler::rluneHandler for #func_ident {
-            fn meta(&self) -> ::rlune::swaggapi::handler::HandlerMeta {
-                ::rlune::swaggapi::handler::HandlerMeta {
-                    method: ::rlune::swaggapi::re_exports::axum::http::method::Method::#method,
+        impl ::rlune::core::handler::rluneHandler for #func_ident {
+            fn meta(&self) -> ::rlune::core::handler::HandlerMeta {
+                ::rlune::core::handler::HandlerMeta {
+                    method: ::rlune::core::re_exports::axum::http::method::Method::#method,
                     path: #path,
                     deprecated: #deprecated,
                     doc: &[#(
@@ -211,11 +211,11 @@ pub fn handler(
                     response_body: #response_body,
                 }
             }
-            fn method_router(&self) -> ::rlune::swaggapi::re_exports::axum::routing::MethodRouter {
+            fn method_router(&self) -> ::rlune::core::re_exports::axum::routing::MethodRouter {
                 #tokens
 
-                ::rlune::swaggapi::re_exports::axum::routing::MethodRouter::new()
-                    .on(::rlune::swaggapi::re_exports::axum::routing::MethodFilter::#method, #func_ident)
+                ::rlune::core::re_exports::axum::routing::MethodRouter::new()
+                    .on(::rlune::core::re_exports::axum::routing::MethodFilter::#method, #func_ident)
             }
         }
     }

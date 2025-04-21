@@ -4,6 +4,8 @@ use axum::body::Bytes;
 use axum::extract::Path;
 use axum::extract::Query;
 use axum::extract::RawForm;
+use axum::http::header;
+use axum::http::HeaderName;
 use axum::http::StatusCode;
 use axum::response::Html;
 use axum::response::Redirect;
@@ -25,7 +27,6 @@ use super::request_part::ShouldBeRequestPart;
 use crate::handler::response_body::ResponseBody;
 use crate::handler::response_body::ShouldBeResponseBody;
 use crate::schema_generator::SchemaGenerator;
-use crate::utils::SchemalessJson;
 
 impl ShouldBeRequestBody for String {}
 impl RequestBody for String {
@@ -45,13 +46,6 @@ impl<T> ShouldBeRequestBody for Json<T> {}
 impl<T: DeserializeOwned + JsonSchema> RequestBody for Json<T> {
     fn body(gen: &mut SchemaGenerator) -> (Mime, Option<Schema>) {
         (mime::APPLICATION_JSON, Some(gen.generate::<T>()))
-    }
-}
-
-impl<T> ShouldBeRequestBody for SchemalessJson<T> {}
-impl<T: DeserializeOwned> RequestBody for SchemalessJson<T> {
-    fn body(_gen: &mut SchemaGenerator) -> (Mime, Option<Schema>) {
-        (mime::APPLICATION_JSON, None)
     }
 }
 
@@ -259,13 +253,6 @@ impl<T: Serialize + JsonSchema> ResponseBody for Json<T> {
     }
 }
 
-impl<T> ShouldBeResponseBody for SchemalessJson<T> {}
-impl<T: Serialize> ResponseBody for SchemalessJson<T> {
-    fn body(_gen: &mut SchemaGenerator) -> Vec<(StatusCode, Option<(Mime, Option<Schema>)>)> {
-        vec![(StatusCode::OK, None)]
-    }
-}
-
 impl ShouldBeResponseBody for () {}
 impl ResponseBody for () {
     fn body(_gen: &mut SchemaGenerator) -> Vec<(StatusCode, Option<(Mime, Option<Schema>)>)> {
@@ -288,6 +275,10 @@ where
 
 impl ShouldBeResponseBody for Redirect {}
 impl ResponseBody for Redirect {
+    fn header() -> Vec<HeaderName> {
+        vec![header::LOCATION]
+    }
+
     fn body(_gen: &mut SchemaGenerator) -> Vec<(StatusCode, Option<(Mime, Option<Schema>)>)> {
         vec![
             (StatusCode::SEE_OTHER, None),

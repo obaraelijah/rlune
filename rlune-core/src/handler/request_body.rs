@@ -1,9 +1,11 @@
 use mime::Mime;
 use schemars::schema::Schema;
 
+use crate::handler::request_part::RequestPart;
+use crate::handler::request_part::ShouldBeRequestPart;
+use crate::macro_utils::type_metadata::HasMetadata;
+use crate::macro_utils::type_metadata::ShouldHaveMetadata;
 use crate::schema_generator::SchemaGenerator;
-use crate::type_metadata::HasMetadata;
-use crate::type_metadata::ShouldHaveMetadata;
 
 /// Describes the behaviour of a type implementing [`FromRequest`](axum::extract::FromRequest)
 pub trait RequestBody: ShouldBeRequestBody {
@@ -23,3 +25,6 @@ impl<T: RequestBody> HasMetadata<RequestBodyMetadata> for T {
         RequestBodyMetadata { body: T::body }
     }
 }
+
+impl<T: ShouldBeRequestBody> ShouldBeRequestPart for T {}
+impl<T: RequestBody> RequestPart for T {}

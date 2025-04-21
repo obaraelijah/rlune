@@ -10,9 +10,7 @@ use tower::Service;
 
 use crate::handler::HandlerMeta;
 use crate::handler::RluneHandler;
-use crate::internals::ptrset::PtrSet;
-use crate::SwaggapiPage;
-use crate::PAGE_OF_EVERYTHING;
+// use crate::{SwaggapiPage, PAGE_OF_EVERYTHING};
 
 /// An `RluneRouter` combines several [`SwaggapiHandler`] under a common path.
 ///
@@ -33,12 +31,12 @@ pub struct RluneRouter {
     /// This is effectively remembers the argument actix' `Scope` was created with.
     /// Since `Router` doesn't take a path, this will always be empty for axum.
     path: String,
-
-    /// Changes have to be applied to already existing `handlers` manually
-    pages: Vec<&'static SwaggapiPage>,
-
-    /// Changes have to be applied to already existing `handlers` manually
-    tags: Vec<&'static str>,
+    //
+    // /// Changes have to be applied to already existing `handlers` manually
+    // pages: Vec<&'static SwaggapiPage>,
+    //
+    // /// Changes have to be applied to already existing `handlers` manually
+    // tags: Vec<&'static str>,
 }
 
 impl RluneRouter {
@@ -57,17 +55,17 @@ impl RluneRouter {
             handlers: Vec::new(),
             router: Router::new(),
             path: String::new(),
-            pages: Vec::new(),
-            tags: Vec::new(),
+            // pages: Vec::new(),
+            // tags: Vec::new(),
         }
     }
 
-    /// Create a new router with a tag
-    ///
-    /// (Shorthand for `RluneRouter::new().tag(...)`)
-    pub fn with_tag(tag: &'static str) -> Self {
-        Self::new().tag(tag)
-    }
+    // /// Create a new router with a tag
+    // ///
+    // /// (Shorthand for `RluneRouter::new().tag(...)`)
+    // pub fn with_tag(tag: &'static str) -> Self {
+    //     Self::new().tag(tag)
+    // }
 
     /// Add a handler to the router
     pub fn handler(mut self, handler: impl RluneHandler) -> Self {
@@ -78,44 +76,44 @@ impl RluneRouter {
         self
     }
 
-    /// Attach a [`SwaggapiPage`] this router's handlers will be added to
-    pub fn page(mut self, page: &'static SwaggapiPage) -> Self {
-        self.pages.push(page);
-        for handler in &mut self.handlers {
-            handler.pages.insert(page);
-        }
-        self
-    }
-
-    /// Add a tag to all of this router's handlers
-    pub fn tag(mut self, tag: &'static str) -> Self {
-        self.tags.push(tag);
-        for handler in &mut self.handlers {
-            handler.tags.insert(tag);
-        }
-        self
-    }
+    // /// Attach a [`SwaggapiPage`] this router's handlers will be added to
+    // pub fn page(mut self, page: &'static SwaggapiPage) -> Self {
+    //     self.pages.push(page);
+    //     for handler in &mut self.handlers {
+    //         handler.pages.insert(page);
+    //     }
+    //     self
+    // }
+    //
+    // /// Add a tag to all of this router's handlers
+    // pub fn tag(mut self, tag: &'static str) -> Self {
+    //     self.tags.push(tag);
+    //     for handler in &mut self.handlers {
+    //         handler.tags.insert(tag);
+    //     }
+    //     self
+    // }
 
     /// Adds a [`MutHandlerMeta`] after adding this router's `path`, `tags` and `pages` to it
     fn push_handler(&mut self, mut handler: MutHandlerMeta) {
         if !self.path.is_empty() {
             handler.path = format!("{}{}", self.path, handler.path);
         }
-        handler.tags.extend(self.tags.iter().copied());
-        handler.pages.extend(self.pages.iter().copied());
+        // handler.tags.extend(self.tags.iter().copied());
+        // handler.pages.extend(self.pages.iter().copied());
         self.handlers.push(handler);
     }
 
     /// Adds the handlers to their api pages and returns the contained framework impl
     fn finish(self) -> Router {
-        for mut handler in self.handlers {
-            handler.path = framework_path_to_openapi(handler.path);
-
-            PAGE_OF_EVERYTHING.add_handler(&handler);
-            for page in handler.pages.iter() {
-                page.add_handler(&handler);
-            }
-        }
+        // for mut handler in self.handlers {
+        //     handler.path = framework_path_to_openapi(handler.path);
+        //
+        //     PAGE_OF_EVERYTHING.add_handler(&handler);
+        //     for page in handler.pages.iter() {
+        //         page.add_handler(&handler);
+        //     }
+        // }
         return self.router;
 
         /// Converts the framework's syntax for path parameters into openapi's
@@ -208,20 +206,14 @@ pub(crate) struct MutHandlerMeta {
 
     /// The handler's modified path
     pub path: String,
-
-    /// The handler's modified path
-    pub tags: PtrSet<'static, str>,
-
-    /// The pages the handler should be added to
-    pub pages: PtrSet<'static, SwaggapiPage>,
 }
 impl MutHandlerMeta {
     /// Constructs a new `MutHandlerMeta`
     pub fn new(original: HandlerMeta) -> Self {
         Self {
             path: original.path.to_string(),
-            tags: PtrSet::from_iter(original.tags.iter().copied()),
-            pages: PtrSet::new(),
+            // tags: PtrSet::from_iter(original.tags.iter().copied()),
+            // pages: PtrSet::new(),
             original,
         }
     }

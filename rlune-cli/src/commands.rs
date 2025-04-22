@@ -16,7 +16,7 @@ use tera::Tera;
 
 use crate::output::print_info;
 
-static _CRATE_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/templates/crate");
+static CRATE_DIR: Dir<'static> = include_dir!("$CARGO_MANIFEST_DIR/templates/crate");
 
 /// Initialize a new rlunes project
 pub fn run_init(name: String, path: String) -> anyhow::Result<()> {
@@ -32,7 +32,7 @@ pub fn run_init(name: String, path: String) -> anyhow::Result<()> {
     create_dir(p.join(&name)).with_context(|| "Couldn't create initial directory")?;
 
     // Recursively create structure and evaluate tera templates
-    create_entries(&ctx, &p.join(&name), MOD_DIR.entries())
+    create_entries(&ctx, &p.join(&name), CRATE_DIR.entries())
         .with_context(|| "Error evaluating and writing templates")?;
 
     Ok(())

@@ -11,7 +11,7 @@ description = "Authentication methods for rlune"
 rlune-core = { version = "*", path = "../../rlune-core" }
  
 # oidc
-openidconnect = { version = "~3", features = ["accept-rfc3339-timestamps"] }
+openidconnect = { version = "~4", features = ["accept-rfc3339-timestamps"] }
  
 # password hashing
 argon2 = { version = "~0.5", features = ["std"] }

@@ -5,11 +5,8 @@ use schemars::schema::Schema;
 
 use crate::handler::response_part::ResponsePart;
 use crate::handler::response_part::ShouldBeResponsePart;
-<<<<<<< HEAD:rlune-core/src/handler/response_body.rs
 use crate::macro_utils::type_metadata::HasMetadata;
 use crate::macro_utils::type_metadata::ShouldHaveMetadata;
-=======
->>>>>>> 1f796685028b63c8017575160e850f6d68661856:swaggapi/src/handler/response_body.rs
 use crate::schema_generator::SchemaGenerator;
 
 /// Describes the behaviour of a type implementing [`IntoResponse`](axum::response::IntoResponse)
@@ -17,7 +14,6 @@ pub trait ResponseBody: ShouldBeResponseBody {
     fn header() -> Vec<HeaderName> {
         vec![]
     }
-
     fn body(_gen: &mut SchemaGenerator) -> Vec<(StatusCode, Option<(Mime, Option<Schema>)>)>;
 }
 
@@ -36,7 +32,6 @@ impl<T: ResponseBody> HasMetadata<ResponseBodyMetadata> for T {
 }
 
 impl<T: ShouldBeResponseBody> ShouldBeResponsePart for T {}
-
 impl<T: ResponseBody> ResponsePart for T {
     fn header() -> Vec<HeaderName> {
         <T as ResponseBody>::header()

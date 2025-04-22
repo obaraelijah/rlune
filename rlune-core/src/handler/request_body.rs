@@ -3,8 +3,11 @@ use schemars::schema::Schema;
 
 use crate::handler::request_part::RequestPart;
 use crate::handler::request_part::ShouldBeRequestPart;
+<<<<<<< HEAD:rlune-core/src/handler/request_body.rs
 use crate::macro_utils::type_metadata::HasMetadata;
 use crate::macro_utils::type_metadata::ShouldHaveMetadata;
+=======
+>>>>>>> 1f796685028b63c8017575160e850f6d68661856:swaggapi/src/handler/request_body.rs
 use crate::schema_generator::SchemaGenerator;
 
 /// Describes the behaviour of a type implementing [`FromRequest`](axum::extract::FromRequest)

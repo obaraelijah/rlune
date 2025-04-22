@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+# CLI parser
+clap = { version = "~4", features = ["derive"] }
+
 # Webframework
 rlune = { version = "*" }
 

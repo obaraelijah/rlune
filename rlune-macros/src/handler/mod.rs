@@ -112,10 +112,10 @@ pub fn handler(
         quote! { None }
     };
 
-    let response_types = match sig.output {
+    let response_types = match &sig.output {
         ReturnType::Default => Vec::new(),
-        ReturnType::Type(_, return_type) => match *return_type {
-            Type::Tuple(tuple) => tuple.elems.into_iter().collect(),
+        ReturnType::Type(_, return_type) => match return_type.as_ref() {
+            Type::Tuple(tuple) => tuple.elems.iter().collect(),
             return_type => vec![return_type],
         },
     };
@@ -151,7 +151,6 @@ pub fn handler(
         quote! { None }
     };
 
-    let ident = Literal::string(&sig.ident.to_string());
     let deprecated = attrs.iter().any(|attr| {
         attr.meta
             .path()
@@ -178,10 +177,14 @@ pub fn handler(
         }
         _ => None,
     });
+
+    let (impl_generics, type_generics, where_clause) = sig.generics.split_for_impl();
+    let turbo_fish = type_generics.as_turbofish();
+    let type_params = sig.generics.type_params().map(|param| &param.ident);
     quote! {
         #[allow(non_camel_case_types)]
-        #vis struct #func_ident;
-        impl ::rlune::core::handler::rluneHandler for #func_ident {
+        #vis struct #func_ident #impl_generics(::std::marker::PhantomData<((), #(#type_params)*)>);
+        impl #impl_generics ::rlune::core::handler::rluneHandler for #func_ident #type_generics #where_clause {
             fn meta(&self) -> ::rlune::core::handler::HandlerMeta {
                 ::rlune::core::handler::HandlerMeta {
                     method: ::rlune::core::re_exports::axum::http::method::Method::#method,
@@ -190,7 +193,7 @@ pub fn handler(
                     doc: &[#(
                         #doc,
                     )*],
-                    ident: #ident,
+                    ident: stringify!(#func_ident),
                     tags: &#tags,
                     request_parts: {
                         let mut x = ::std::vec::Vec::new();
@@ -215,7 +218,7 @@ pub fn handler(
                 #tokens
 
                 ::rlune::core::re_exports::axum::routing::MethodRouter::new()
-                    .on(::rlune::core::re_exports::axum::routing::MethodFilter::#method, #func_ident)
+                    .on(::rlune::core::re_exports::axum::routing::MethodFilter::#method, #func_ident #turbo_fish)
             }
         }
     }

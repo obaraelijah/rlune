@@ -22,6 +22,6 @@ fn main() -> anyhow::Result<()> {
         print_stacktrace(err);
         exit(1);
     }
-    
+
     Ok(())
 }

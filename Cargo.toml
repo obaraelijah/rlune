@@ -5,7 +5,8 @@ members = [
     "rlune-cli",
     "rlune-macros",
     "rlune-core",
+    "./contrib/rlune-contrib-auth",
     "contrib/rlune-contrib-tracing",
-    "swaggapi",
-    "example/blog",  
+    "example/blog",
+    "swaggapi",  
 ]

@@ -10,6 +10,10 @@ description = "Authentication methods for rlune"
 # Core component
 rlune-core = { version = "*", path = "../../rlune-core" }
  
+
+# TODO: maybe roll our own?
+envy = { version = "~0.4" }
+
 # oidc
 openidconnect = { version = "~3", features = ["accept-rfc3339-timestamps"] }
 

@@ -5,7 +5,8 @@ use crate::core::Module;
 use crate::error::RluneError;
 use axum::Router;
 use rlune_core::registry::builder::RegistryBuilder;
-use rlune_core::RluneRouter;
+use rlune_core::{session, RluneRouter};
+use rorm::Database; 
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::Level;
@@ -27,7 +28,9 @@ impl Rlune {
 
         registry.init();
 
-        Self::default()
+        let mut rlune = Rlune::default();
+        rlune.register_module::<Database>();
+        rlune
     }
 
     /// Register a module
@@ -40,7 +43,7 @@ impl Rlune {
     pub async fn start(&mut self, socket_addr: SocketAddr) -> Result<(), RluneError> {
         self.modules.init().await.map_err(io::Error::other)?;
 
-        let router = Router::from(mem::take(&mut self.routes));
+        let router = Router::from(mem::take(&mut self.routes)).layer(session::layer());
 
         let socket = TcpListener::bind(socket_addr).await?;
 

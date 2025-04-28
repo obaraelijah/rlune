@@ -8,4 +8,7 @@ use thiserror::Error;
 pub enum RluneError {
     #[error("{0}")]
     Io(#[from] io::Error),
+
+    #[error("{0}")]
+    Init(#[from] rlune_core::module::registry::builder::InitError),
 }

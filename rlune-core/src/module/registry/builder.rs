@@ -156,7 +156,22 @@ pub enum InitError {
 
 impl fmt::Display for InitError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!("{self:?}")
+        let phase = match self {
+            InitError::PreInit(_) => "pre-",
+            InitError::Init(_) => "",
+            InitError::PostInit(_) => "post-",
+        };
+        let (first, rest) = match self {
+            InitError::PreInit(errors) => errors.split_first(),
+            InitError::Init(error) => Some((error, [].as_slice())),
+            InitError::PostInit(errors) => errors.split_first(),
+        }
+        .unwrap_or_else(|| unreachable!("Error lists should not be empty"));
+        write!(f, "Error during module {phase}initialisation: {first}")?;
+        if rest.is_empty() {
+            write!(f, " (and {} more...)", rest.len())?;
+        }
+        Ok(())
     }
 }
 impl Error for InitError {}

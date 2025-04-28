@@ -1,15 +1,24 @@
-use crate::module;
-use crate::module::registry::module_set::OwnedModulesSet;
-use crate::module::registry::ModuleDependencies;
-use crate::module::registry::{DynModule, Registry};
-use crate::module::Module;
-use futures_concurrency::future::Join;
-use futures_lite::future;
-use std::any::{type_name, TypeId};
+use std::any::type_name;
+use std::any::TypeId;
 use std::error::Error;
 use std::fmt;
-use tokio::task::{JoinError, JoinHandle};
-use tracing::{debug, instrument, trace, trace_span, Instrument};
+
+use futures_concurrency::future::Join;
+use futures_lite::future;
+use tokio::task::JoinError;
+use tokio::task::JoinHandle;
+use tracing::debug;
+use tracing::instrument;
+use tracing::trace;
+use tracing::trace_span;
+use tracing::Instrument;
+
+use crate::module;
+use crate::module::registry::module_set::OwnedModulesSet;
+use crate::module::registry::DynModule;
+use crate::module::registry::ModuleDependencies;
+use crate::module::registry::Registry;
+use crate::module::Module;
 
 #[derive(Default)]
 pub struct RegistryBuilder {

@@ -1,14 +1,22 @@
-use crate::Module;
-use rorm::fields::types::Json;
-use rorm::internal::field::{Field, FieldProxy};
-use rorm::{Database, Model, Patch};
-use schemars::_serde_json::Value;
 use std::collections::HashMap;
-use tower_sessions::cookie::time::{Duration, OffsetDateTime};
+
+use rorm::fields::types::Json;
+use rorm::internal::field::Field;
+use rorm::internal::field::FieldProxy;
+use rorm::Database;
+use rorm::Model;
+use rorm::Patch;
+use schemars::_serde_json::Value;
+use tower_sessions::cookie::time::Duration;
+use tower_sessions::cookie::time::OffsetDateTime;
 use tower_sessions::cookie::SameSite;
+use tower_sessions::Expiry;
 pub use tower_sessions::Session;
-use tower_sessions::{Expiry, SessionManagerLayer};
-use tower_sessions_rorm_store::{RormStore, SessionModel};
+use tower_sessions::SessionManagerLayer;
+use tower_sessions_rorm_store::RormStore;
+use tower_sessions_rorm_store::SessionModel;
+
+use crate::Module;
 
 pub fn layer() -> SessionManagerLayer<RormStore<RluneSession>> {
     SessionManagerLayer::new(RormStore::<RluneSession>::new(Database::global().clone()))

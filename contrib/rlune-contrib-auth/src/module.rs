@@ -1,15 +1,25 @@
-use rlune_core::{InitError, Module, PreInitError};
-use openidconnect::core::{CoreClient as OidcClient, CoreProviderMetadata};
-use openidconnect::reqwest::async_http_client;
-use openidconnect::{ClientId, ClientSecret, IssuerUrl};
-use rorm::Database;
-use serde::{Deserialize, Serialize};
-use std::future::{ready, Future};
+use std::fs;
+use std::future::ready;
+use std::future::Future;
+use std::io;
 use std::path::PathBuf;
-use std::{fs, io};
-use webauthn_rs::prelude::{AttestationCaList, Url};
-use webauthn_rs::{Webauthn, WebauthnBuilder};
 
+use openidconnect::core::CoreClient as OidcClient;
+use openidconnect::core::CoreProviderMetadata;
+use openidconnect::reqwest::async_http_client;
+use openidconnect::ClientId;
+use openidconnect::ClientSecret;
+use openidconnect::IssuerUrl;
+use rlune_core::InitError;
+use rlune_core::Module;
+use rlune_core::PreInitError;
+use rorm::Database;
+use serde::Deserialize;
+use serde::Serialize;
+use webauthn_rs::prelude::AttestationCaList;
+use webauthn_rs::prelude::Url;
+use webauthn_rs::Webauthn;
+use webauthn_rs::WebauthnBuilder;
 
 /// The authentication module provides the state required by the authentication handlers
 pub struct AuthModule {
@@ -18,7 +28,6 @@ pub struct AuthModule {
     pub(crate) webauthn: Webauthn,
     pub(crate) attestation_ca_list: AttestationCaList,
 }
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthConfig {
@@ -30,7 +39,6 @@ pub struct AuthConfig {
     pub webauthn_origin: Url,
     pub webauthn_attestation_ca_list: PathBuf,
 }
-
 
 impl Module for AuthModule {
     type PreInit = (OidcClient, Webauthn, AttestationCaList);

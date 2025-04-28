@@ -1,18 +1,21 @@
+use std::io;
+use std::mem;
 use std::net::SocketAddr;
-use std::{io, mem};
 
-use crate::core::Module;
-use crate::error::RluneError;
 use axum::Router;
 use rlune_core::registry::builder::RegistryBuilder;
-use rlune_core::{session, RluneRouter};
-use rorm::Database; 
+use rlune_core::session;
+use rlune_core::RluneRouter;
+use rorm::Database;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
+
+use crate::core::Module;
+use crate::error::RluneError;
 
 #[derive(Default)]
 pub struct Rlune {

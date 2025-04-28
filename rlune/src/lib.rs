@@ -11,8 +11,8 @@ pub mod core {
 pub use crate::rlune::*;
 
 pub mod error;
-mod rlune;
 mod macro_docs;
+mod rlune;
 
 pub use macro_docs::*;
 pub use swaggapi;

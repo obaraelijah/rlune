@@ -17,7 +17,7 @@ use crate::handler::RluneHandler;
 /// It is also responsible for adding them to [`SwaggapiPage`]s once mounted to your application.
 ///
 /// TODO: update these docs
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct RluneRouter {
     /// The contained handlers
     handlers: Vec<MutHandlerMeta>,
@@ -51,13 +51,7 @@ impl RluneRouter {
     ///
     /// TODO: update these docs
     pub fn new() -> Self {
-        Self {
-            handlers: Vec::new(),
-            router: Router::new(),
-            path: String::new(),
-            // pages: Vec::new(),
-            // tags: Vec::new(),
-        }
+        Self::default()
     }
 
     // /// Create a new router with a tag

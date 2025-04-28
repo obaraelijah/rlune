@@ -1,19 +1,22 @@
 use std::net::SocketAddr;
+use std::{io, mem};
 
+use crate::core::Module;
+use crate::error::RluneError;
 use axum::Router;
+use rlune_core::registry::builder::RegistryBuilder;
+use rlune_core::RluneRouter;
 use tokio::net::TcpListener;
-use tracing::debug;
 use tracing::info;
 use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 
-use crate::core::Module;
-use crate::error::RluneError;
-
+#[derive(Default)]
 pub struct Rlune {
-    modules: Vec<Box<dyn Module>>,
+    modules: RegistryBuilder,
+    routes: RluneRouter,
 }
 
 impl Rlune {
@@ -24,41 +27,26 @@ impl Rlune {
 
         registry.init();
 
-        Self { modules: vec![] }
+        Self::default()
     }
 
     /// Register a module
-    pub fn register_module(&mut self, module: impl Module + 'static) {
-        module.init_stage();
-
-        debug!("Register module {}", module.name());
-
-        self.modules.push(Box::new(module));
+    pub fn register_module<T: Module>(&mut self) -> &mut Self {
+        self.modules.register_module::<T>();
+        self
     }
 
     /// Initializes all modules and start the webserver
-    pub async fn start(&self, socket_addr: SocketAddr) -> Result<(), RluneError> {
-        // Run router stage
-        let routes = self.router_stage();
+    pub async fn start(&mut self, socket_addr: SocketAddr) -> Result<(), RluneError> {
+        self.modules.init().await.map_err(io::Error::other)?;
+
+        let router = Router::from(mem::take(&mut self.routes));
 
         let socket = TcpListener::bind(socket_addr).await?;
 
         info!("Starting to serve webserver on http://{socket_addr}");
-        axum::serve(socket, routes).await?;
+        axum::serve(socket, router).await?;
 
         Ok(())
-    }
-}
-
-// Private methods
-impl Rlune {
-    fn router_stage(&self) -> Router {
-        let mut root = Router::new();
-
-        for m in &self.modules {
-            root = m.router_stage(root);
-        }
-
-        root
     }
 }

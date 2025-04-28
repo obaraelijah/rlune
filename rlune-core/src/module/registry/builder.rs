@@ -1,6 +1,7 @@
 use std::any::TypeId;
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
+use std::error::Error;
 
 use futures_concurrency::future::Join;
 use futures_lite::future;
@@ -14,6 +15,7 @@ use crate::module::registry::ModuleDependencies;
 use crate::module::registry::Registry;
 use crate::module::Module;
 
+#[derive(Default)]
 pub struct RegistryBuilder {
     modules: HashMap<TypeId, UninitModule>,
 }
@@ -21,9 +23,7 @@ pub struct RegistryBuilder {
 impl RegistryBuilder {
     /// Constructs a new `RegistryBuilder`
     pub fn new() -> Self {
-        Self {
-            modules: HashMap::new(),
-        }
+        Self::default()
     }
 
     /// Adds a new module to the `RegistryBuilder`
@@ -112,6 +112,14 @@ pub enum InitError {
     Init(module::InitError),
     PostInit(Vec<module::PostInitError>),
 }
+
+impl std::fmt::Display for InitError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        todo!("{self:?}")
+    }
+}
+
+impl Error for InitError {}
 
 /// An uninitialised module waiting to be pre-initialised
 type UninitModule = Box<dyn Fn() -> JoinHandle<Result<PreInitModule, module::PreInitError>>>;

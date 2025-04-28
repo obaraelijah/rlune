@@ -14,7 +14,7 @@ axum = { version = "~0.7" }
 rlune-core = { version = "~0.1", path = "../rlune-core" }
 
 # Contrib modules
-rlune-contrib-tracing = { version = "~0.1", path = "../contrib/rlune-contrib-tracing", optional = true }
+# rlune-contrib-tracing = { version = "~0.1", path = "../contrib/rlune-contrib-tracing", optional = true }
 
 # Error handling
 thiserror = { version = "~1" }
@@ -31,5 +31,5 @@ rlune-macros = { version = "0.2.0", path = "../rlune-macros" }
 
 [features]
 contrib = [
-    "dep:rlune-contrib-tracing",
+    # "dep:rlune-contrib-tracing",
 ]

@@ -11,6 +11,7 @@ use thiserror::Error;
 use crate::module::registry::ModuleDependencies;
 use crate::module::registry::Registry;
 
+mod impls;
 mod registry;
 
 /// A module is a globally available singleton which exists for the entire duration of the application.

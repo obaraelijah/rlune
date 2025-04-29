@@ -1,4 +1,3 @@
-use std::io;
 use std::mem;
 use std::net::SocketAddr;
 
@@ -34,6 +33,11 @@ impl Rlune {
         let mut rlune = Rlune::default();
         rlune.register_module::<Database>();
         rlune
+    }
+
+    pub fn add_routes(&mut self, routes: RluneRouter) -> &mut Self {
+        self.routes = mem::take(&mut self.routes).merge(routes);
+        self
     }
 
     /// Register a module

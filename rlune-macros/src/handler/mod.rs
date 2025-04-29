@@ -7,13 +7,13 @@ use proc_macro2::TokenTree;
 use quote::format_ident;
 use quote::quote;
 use quote::quote_spanned;
+use std::str::FromStr;
 use syn::spanned::Spanned;
-use syn::FnArg;
 use syn::ItemFn;
 use syn::Meta;
 use syn::MetaNameValue;
 use syn::ReturnType;
-use syn::Type;
+use syn::{FnArg, Type};
 
 mod parse;
 
@@ -59,6 +59,39 @@ pub fn handler(
             Delimiter::Bracket,
             TokenStream::new(),
         )));
+    let core_crate = match keyword.remove(&Ident::new("core_crate", Span::call_site())) {
+        None => quote! { ::rlune::core },
+        Some(value) => {
+            let literal = match &value {
+                TokenTree::Literal(literal) => Some(literal.to_string()),
+                _ => None,
+            };
+            let Some(literal) = literal
+                .as_ref()
+                .and_then(|s| s.strip_suffix('"'))
+                .and_then(|s| s.strip_prefix('"'))
+            else {
+                let err = quote_spanned! {value.span()=>
+                    compile_error!("Expected string literal");
+                };
+                return quote! {
+                    #err
+                    #tokens
+                };
+            };
+
+            let Ok(path) = TokenStream::from_str(literal) else {
+                let err = quote_spanned! {value.span()=>
+                    compile_error!("Expected crate path");
+                };
+                return quote! {
+                    #err
+                    #tokens
+                };
+            };
+            path
+        }
+    };
 
     if let Some(value) = positional.next() {
         let err = quote_spanned! {value.span()=>
@@ -93,8 +126,8 @@ pub fn handler(
 
     let request_parts = request_types.iter().map(|part| {
         quote_spanned! {part.span()=>
-            ::rlune::core::get_metadata!(
-                ::rlune::core::handler::request_part::RequestPartMetadata,
+            #core_crate::get_metadata!(
+                #core_crate::handler::request_part::RequestPartMetadata,
                 #part
             )
         }
@@ -102,8 +135,8 @@ pub fn handler(
 
     let request_body = if let Some(body) = request_types.last() {
         quote_spanned! {body.span()=>
-            ::rlune::core::get_metadata!(
-                ::rlune::core::handler::request_body::RequestBodyMetadata,
+            #core_crate::get_metadata!(
+                #core_crate::handler::request_body::RequestBodyMetadata,
                 #body
             )
         }
@@ -121,8 +154,8 @@ pub fn handler(
 
     let response_modifier = if let Some(body) = response_types.first() {
         quote_spanned! {body.span()=>
-            ::rlune::core::get_metadata!(
-                ::rlune::core::handler::ResponseModifier,
+            #core_crate::get_metadata!(
+                #core_crate::handler::ResponseModifier,
                 #body
             )
         }
@@ -132,8 +165,8 @@ pub fn handler(
 
     let response_parts = response_types.iter().map(|part| {
         quote_spanned! {part.span()=>
-            ::rlune::core::get_metadata!(
-                ::rlune::core::handler::response_part::ResponsePartMetadata,
+            #core_crate::get_metadata!(
+                #core_crate::handler::response_part::ResponsePartMetadata,
                 #part
             )
         }
@@ -141,8 +174,8 @@ pub fn handler(
 
     let response_body = if let Some(body) = response_types.last() {
         quote_spanned! {body.span()=>
-            ::rlune::core::get_metadata!(
-                ::rlune::core::handler::response_body::ResponseBodyMetadata,
+            #core_crate::get_metadata!(
+                #core_crate::handler::response_body::ResponseBodyMetadata,
                 #body
             )
         }
@@ -183,10 +216,10 @@ pub fn handler(
     quote! {
         #[allow(non_camel_case_types)]
         #vis struct #func_ident #impl_generics(::std::marker::PhantomData<((), #(#type_params)*)>);
-        impl #impl_generics ::rlune::core::handler::rluneHandler for #func_ident #type_generics #where_clause {
-            fn meta(&self) -> ::rlune::core::handler::HandlerMeta {
-                ::rlune::core::handler::HandlerMeta {
-                    method: ::rlune::core::re_exports::axum::http::method::Method::#method,
+        impl #impl_generics #core_crate::handler::RluneHandler for #func_ident #type_generics #where_clause {
+            fn meta(&self) -> #core_crate::handler::HandlerMeta {
+                #core_crate::handler::HandlerMeta {
+                    method: #core_crate::re_exports::axum::http::method::Method::#method,
                     path: #path,
                     deprecated: #deprecated,
                     doc: &[#(
@@ -213,11 +246,11 @@ pub fn handler(
                     response_body: #response_body,
                 }
             }
-            fn method_router(&self) -> ::rlune::core::re_exports::axum::routing::MethodRouter {
+            fn method_router(&self) -> #core_crate::re_exports::axum::routing::MethodRouter {
                 #tokens
 
-                ::rlune::core::re_exports::axum::routing::MethodRouter::new()
-                    .on(::rlune::core::re_exports::axum::routing::MethodFilter::#method, #func_ident #turbo_fish)
+                #core_crate::re_exports::axum::routing::MethodRouter::new()
+                    .on(#core_crate::re_exports::axum::routing::MethodFilter::#method, #func_ident #turbo_fish)
             }
         }
     }

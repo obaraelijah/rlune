@@ -15,6 +15,7 @@ rlune-core = { version = "~0.1", path = "../rlune-core" }
 
 # Contrib modules
 # rlune-contrib-tracing = { version = "~0.1", path = "../contrib/rlune-contrib-tracing", optional = true }
+rlune-contrib-auth = { version = "~0.1", path = "../contrib/rlune-contrib-auth", optional = true }
 
 # Error handling
 thiserror = { version = "~2" }
@@ -34,4 +35,5 @@ rorm = { version = "~0.6", default-features = false, features = ["postgres-only"
 [features]
 contrib = [
     # "dep:rlune-contrib-tracing",
+    "dep:rlune-contrib-auth",
 ]

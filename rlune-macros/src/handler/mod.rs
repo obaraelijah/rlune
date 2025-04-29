@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use proc_macro2::Delimiter;
 use proc_macro2::Group;
 use proc_macro2::Ident;
@@ -7,13 +9,13 @@ use proc_macro2::TokenTree;
 use quote::format_ident;
 use quote::quote;
 use quote::quote_spanned;
-use std::str::FromStr;
 use syn::spanned::Spanned;
+use syn::FnArg;
 use syn::ItemFn;
 use syn::Meta;
 use syn::MetaNameValue;
 use syn::ReturnType;
-use syn::{FnArg, Type};
+use syn::Type;
 
 mod parse;
 
@@ -255,10 +257,10 @@ pub fn handler(
                 #tokens
 
                 fn test_send<T: Send>(_f: impl FnOnce() -> T) {}
-                
+
                 #[allow(unreachable_code)]
                 test_send(|| #func_ident #turbo_fish(#(#args_todo),*));
-                
+
                 #core_crate::re_exports::axum::routing::MethodRouter::new()
                     .on(#core_crate::re_exports::axum::routing::MethodFilter::#method, #func_ident #turbo_fish)
             }

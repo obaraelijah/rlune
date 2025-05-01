@@ -1,8 +1,11 @@
 use rlune::contrib::auth::MaybeAttestedPasskey;
 use rorm::fields::types::Json;
-use rorm::internal::field::{Field, FieldProxy};
-use rorm::prelude::{ForeignModel, ForeignModelByField};
-use rorm::{Model, Patch};
+use rorm::internal::field::Field;
+use rorm::internal::field::FieldProxy;
+use rorm::prelude::ForeignModel;
+use rorm::prelude::ForeignModelByField;
+use rorm::Model;
+use rorm::Patch;
 
 #[derive(Model)]
 pub struct Account {

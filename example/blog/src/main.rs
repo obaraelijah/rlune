@@ -1,20 +1,21 @@
 mod auth_models;
 
 use std::any::type_name;
+use std::any::Any;
+use std::marker::PhantomData;
 use std::net::SocketAddr;
+use std::panic;
+use std::panic::Location;
 use std::str::FromStr;
 
 use rlune::contrib::auth::AuthModule;
-use rlune::{get, Rlune};
-use std::any::Any;
-use std::marker::PhantomData;
-use std::panic;
-use std::panic::Location;
+use rlune::core::Module;
+use rlune::core::RluneRouter;
+use rlune::get;
+use rlune::Rlune;
+use tracing::error;
 
 use crate::auth_models::AuthModels;
-use rlune::contrib::auth;
-use rlune::core::RluneRouter;
-use tracing::error;
 
 #[get("/index")]
 async fn test<const N: usize, T: 'static>() -> String {
@@ -25,27 +26,15 @@ async fn test<const N: usize, T: 'static>() -> String {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing_panic_hook();
 
-    Rlune::init()
-        .register_module::<AuthModule>()
-        .add_routes(
-            RluneRouter::new().nest(
-                "/auth",
-                RluneRouter::new()
-                    .handler(auth::handler::get_login_flow::<AuthModels>(PhantomData))
-                    .handler(auth::handler::login_oidc::<AuthModels>(PhantomData))
-                    .handler(auth::handler::finish_login_oidc::<AuthModels>(PhantomData))
-                    .handler(auth::handler::login_local_webauthn::<AuthModels>(
-                        PhantomData,
-                    ))
-                    .handler(auth::handler::finish_login_local_webauthn::<AuthModels>(
-                        PhantomData,
-                    ))
-                    .handler(auth::handler::login_local_password::<AuthModels>(
-                        PhantomData,
-                    ))
-                    .handler(auth::handler::logout(PhantomData)),
-            ),
-        )
+    Rlune::new()
+        .register_module::<AuthModule<AuthModels>>()
+        .init_modules()
+        .await?
+        .add_routes(RluneRouter::new().nest(
+            "/auth",
+            AuthModule::<AuthModels>::global().handler.as_router(),
+        ))
+        .add_routes(RluneRouter::new().handler(test::<1337, ()>(PhantomData)))
         .start(SocketAddr::from_str("127.0.0.1:8080")?)
         .await?;
 

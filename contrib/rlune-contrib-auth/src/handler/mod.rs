@@ -1,29 +1,42 @@
-use crate::handler::schema::{
-    FinishLoginOidcRequest, GetLoginFlowsRequest, GetLoginFlowsResponse, LocalLoginFlow,
-    LoginLocalPasswordRequest, LoginLocalWebauthnRequest, OidcLoginFlow, PublicKeyCredential,
-};
-use crate::models::AuthModels;
-use crate::module::AuthModule;
-use crate::MaybeAttestedPasskey;
+use openidconnect::core::CoreAuthenticationFlow;
+use openidconnect::reqwest::async_http_client;
+use openidconnect::AccessTokenHash;
+use openidconnect::CsrfToken;
+use openidconnect::Nonce;
+use openidconnect::OAuth2TokenResponse;
+use openidconnect::PkceCodeChallenge;
+use openidconnect::PkceCodeVerifier;
+use openidconnect::Scope;
+use openidconnect::TokenResponse;
 use rlune_core::re_exports::axum::extract::Query;
 use rlune_core::re_exports::axum::response::Redirect;
 use rlune_core::re_exports::axum::Json;
 use rlune_core::session::Session;
 use rlune_core::stuff::api_error::ApiResult;
 use rlune_core::Module;
-use rlune_core::{get, post};
-use openidconnect::core::CoreAuthenticationFlow;
-use openidconnect::reqwest::async_http_client;
-use openidconnect::{
-    AccessTokenHash, CsrfToken, Nonce, OAuth2TokenResponse, PkceCodeChallenge, PkceCodeVerifier,
-    Scope, TokenResponse,
-};
+use rlune_macros::get;
+use rlune_macros::post;
 use rorm::crud::query::QueryBuilder;
+use rorm::insert;
 use rorm::internal::field::foreign_model::FieldEq_ForeignModelByField_Borrowed;
 use rorm::prelude::ForeignModelByField;
-use rorm::{insert, FieldAccess};
-use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::{AttestedPasskeyAuthentication, RequestChallengeResponse};
+use rorm::FieldAccess;
+use serde::Deserialize;
+use serde::Serialize;
+use webauthn_rs::prelude::AttestedPasskeyAuthentication;
+use webauthn_rs::prelude::RequestChallengeResponse;
+
+use crate::handler::schema::FinishLoginOidcRequest;
+use crate::handler::schema::GetLoginFlowsRequest;
+use crate::handler::schema::GetLoginFlowsResponse;
+use crate::handler::schema::LocalLoginFlow;
+use crate::handler::schema::LoginLocalPasswordRequest;
+use crate::handler::schema::LoginLocalWebauthnRequest;
+use crate::handler::schema::OidcLoginFlow;
+use crate::handler::schema::PublicKeyCredential;
+use crate::models::AuthModels;
+use crate::module::AuthModule;
+use crate::MaybeAttestedPasskey;
 
 mod schema;
 
@@ -31,7 +44,7 @@ mod schema;
 pub async fn get_login_flow<M: AuthModels>(
     Query(request): Query<GetLoginFlowsRequest>,
 ) -> ApiResult<Json<Option<GetLoginFlowsResponse>>> {
-    let mut tx = AuthModule::global().db.start_transaction().await?;
+    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
     let Some((user_pk,)) = QueryBuilder::new(&mut tx, (M::account_pk(),))
         .condition(M::account_id().equals(request.identifier.as_str()))
@@ -83,7 +96,7 @@ pub async fn get_login_flow<M: AuthModels>(
 pub async fn login_oidc<M: AuthModels>(session: Session) -> ApiResult<Redirect> {
     let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
 
-    let request = AuthModule::global()
+    let request = AuthModule::<M>::global()
         .oidc
         .authorize_url(
             CoreAuthenticationFlow::AuthorizationCode,
@@ -134,7 +147,7 @@ pub async fn finish_login_oidc<M: AuthModels>(
         return Err("Bad Request".into());
     }
 
-    let token = AuthModule::global()
+    let token = AuthModule::<M>::global()
         .oidc
         .exchange_code(request.code)
         .set_pkce_verifier(pkce_code_verifier)
@@ -142,7 +155,7 @@ pub async fn finish_login_oidc<M: AuthModels>(
         .await?;
 
     let id_token = token.id_token().ok_or_else(|| "Missing id token")?;
-    let claims = id_token.claims(&AuthModule::global().oidc.id_token_verifier(), &nonce)?;
+    let claims = id_token.claims(&AuthModule::<M>::global().oidc.id_token_verifier(), &nonce)?;
 
     // Verify the access token hash to ensure that the access token hasn't been substituted for
     // another user's.
@@ -159,7 +172,7 @@ pub async fn finish_login_oidc<M: AuthModels>(
         return Err("Missing claim: preferred_username".into());
     };
 
-    let mut tx = AuthModule::global().db.start_transaction().await?;
+    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
     let account_pk = if let Some((account_fm,)) =
         QueryBuilder::new(&mut tx, (M::oidc_account_fm(),))
@@ -201,7 +214,7 @@ pub async fn login_local_webauthn<M: AuthModels>(
     session: Session,
     Json(request): Json<LoginLocalWebauthnRequest>,
 ) -> ApiResult<Json<RequestChallengeResponse>> {
-    let mut tx = AuthModule::global().db.start_transaction().await?;
+    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
     let (account_pk,) = QueryBuilder::new(&mut tx, (M::account_pk(),))
         .condition(M::account_id().equals(&request.identifier))
@@ -232,7 +245,7 @@ pub async fn login_local_webauthn<M: AuthModels>(
         })
         .collect::<Vec<_>>();
 
-    let (challenge, state) = AuthModule::global()
+    let (challenge, state) = AuthModule::<M>::global()
         .webauthn
         .start_attested_passkey_authentication(&keys)?;
 
@@ -267,11 +280,11 @@ pub async fn finish_login_local_webauthn<M: AuthModels>(
         .await?
         .ok_or("Bad Request")?;
 
-    let authentication_result = AuthModule::global()
+    let authentication_result = AuthModule::<M>::global()
         .webauthn
         .finish_attested_passkey_authentication(&request.0, &state)?;
 
-    let mut tx = AuthModule::global().db.start_transaction().await?;
+    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
     let (account_pk,) = QueryBuilder::new(&mut tx, (M::account_pk(),))
         .condition(M::account_id().equals(&identifier))
@@ -316,7 +329,7 @@ pub async fn login_local_password<M: AuthModels>(
     session: Session,
     Json(request): Json<LoginLocalPasswordRequest>,
 ) -> ApiResult<()> {
-    let mut tx = AuthModule::global().db.start_transaction().await?;
+    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
     let (account_pk,) = QueryBuilder::new(&mut tx, (M::account_pk(),))
         .condition(M::account_id().equals(&request.identifier))

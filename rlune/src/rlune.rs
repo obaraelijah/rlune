@@ -16,28 +16,31 @@ use tracing_subscriber::EnvFilter;
 use crate::core::Module;
 use crate::error::RluneError;
 
-#[derive(Default)]
-pub struct Rlune {
-    modules: RegistryBuilder,
-    routes: RluneRouter,
-}
+#[non_exhaustive]
+pub struct Rlune;
 
 impl Rlune {
-    pub fn init() -> Self {
+    pub fn new() -> ModuleBuilder {
+        ModuleBuilder::new()
+    }
+}
+
+#[derive(Default)]
+pub struct ModuleBuilder {
+    modules: RegistryBuilder,
+}
+
+impl ModuleBuilder {
+    fn new() -> ModuleBuilder {
         let registry = tracing_subscriber::registry()
             .with(EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new(Level::INFO.as_str())))
             .with(tracing_subscriber::fmt::layer());
 
         registry.init();
 
-        let mut rlune = Rlune::default();
-        rlune.register_module::<Database>();
-        rlune
-    }
-
-    pub fn add_routes(&mut self, routes: RluneRouter) -> &mut Self {
-        self.routes = mem::take(&mut self.routes).merge(routes);
-        self
+        let mut this = ModuleBuilder::default();
+        this.register_module::<Database>();
+        this
     }
 
     /// Register a module
@@ -46,10 +49,28 @@ impl Rlune {
         self
     }
 
-    /// Initializes all modules and start the webserver
-    pub async fn start(&mut self, socket_addr: SocketAddr) -> Result<(), RluneError> {
+    pub async fn init_modules(&mut self) -> Result<RouterBuilder, RluneError> {
         self.modules.init().await?;
+        Ok(RouterBuilder {
+            routes: RluneRouter::new(),
+        })
+    }
+}
 
+pub struct RouterBuilder {
+    routes: RluneRouter,
+}
+
+impl RouterBuilder {
+    /// Adds a router to the builder
+    pub fn add_routes(&mut self, router: RluneRouter) -> &mut Self {
+        let this = mem::take(&mut self.routes);
+        self.routes = this.merge(router);
+        self
+    }
+
+    /// Starts the webserver
+    pub async fn start(&mut self, socket_addr: SocketAddr) -> Result<(), RluneError> {
         let router = Router::from(mem::take(&mut self.routes)).layer(session::layer());
 
         let socket = TcpListener::bind(socket_addr).await?;

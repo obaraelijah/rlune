@@ -2,6 +2,7 @@ use std::fs;
 use std::future::ready;
 use std::future::Future;
 use std::io;
+use std::marker::PhantomData;
 use std::path::PathBuf;
 
 use openidconnect::core::CoreClient as OidcClient;
@@ -13,6 +14,7 @@ use openidconnect::IssuerUrl;
 use rlune_core::InitError;
 use rlune_core::Module;
 use rlune_core::PreInitError;
+use rlune_core::RluneRouter;
 use rorm::Database;
 use serde::Deserialize;
 use serde::Serialize;
@@ -21,13 +23,35 @@ use webauthn_rs::prelude::Url;
 use webauthn_rs::Webauthn;
 use webauthn_rs::WebauthnBuilder;
 
+use crate::handler;
+use crate::AuthModels;
+
 /// The authentication module provides the state required by the authentication handlers
-pub struct AuthModule {
+pub struct AuthModule<M: AuthModels> {
+    pub handler: AuthHandler<M>,
     pub(crate) db: Database,
     pub(crate) oidc: OidcClient,
     pub(crate) webauthn: Webauthn,
     pub(crate) attestation_ca_list: AttestationCaList,
+    models: PhantomData<M>,
 }
+
+pub struct AuthHandler<M: AuthModels> {
+    pub get_login_flow: handler::get_login_flow<M>,
+    pub login_oidc: handler::login_oidc<M>,
+    pub finish_login_oidc: handler::finish_login_oidc<M>,
+    pub login_local_webauthn: handler::login_local_webauthn<M>,
+    pub finish_login_local_webauthn: handler::finish_login_local_webauthn<M>,
+    pub login_local_password: handler::login_local_password<M>,
+    pub logout: handler::logout,
+}
+
+impl<M: AuthModels> Clone for AuthHandler<M> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+impl<M: AuthModels> Copy for AuthHandler<M> {}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct AuthConfig {
@@ -40,7 +64,20 @@ pub struct AuthConfig {
     pub webauthn_attestation_ca_list: PathBuf,
 }
 
-impl Module for AuthModule {
+impl<M: AuthModels> AuthHandler<M> {
+    pub fn as_router(&self) -> RluneRouter {
+        RluneRouter::new()
+            .handler(self.get_login_flow)
+            .handler(self.login_oidc)
+            .handler(self.finish_login_oidc)
+            .handler(self.login_local_webauthn)
+            .handler(self.finish_login_local_webauthn)
+            .handler(self.login_local_password)
+            .handler(self.logout)
+    }
+}
+
+impl<M: AuthModels> Module for AuthModule<M> {
     type PreInit = (OidcClient, Webauthn, AttestationCaList);
 
     fn pre_init() -> impl Future<Output = Result<Self::PreInit, PreInitError>> + Send {
@@ -81,6 +118,16 @@ impl Module for AuthModule {
             oidc,
             webauthn,
             attestation_ca_list,
+            models: PhantomData,
+            handler: AuthHandler {
+                get_login_flow: handler::get_login_flow(PhantomData),
+                login_oidc: handler::login_oidc(PhantomData),
+                finish_login_oidc: handler::finish_login_oidc(PhantomData),
+                login_local_webauthn: handler::login_local_webauthn(PhantomData),
+                finish_login_local_webauthn: handler::finish_login_local_webauthn(PhantomData),
+                login_local_password: handler::login_local_password(PhantomData),
+                logout: handler::logout(PhantomData),
+            },
         }))
     }
 }

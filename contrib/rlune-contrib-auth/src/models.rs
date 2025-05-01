@@ -1,14 +1,18 @@
 use rorm::fields::traits::FieldType;
 use rorm::fields::types::Json;
 use rorm::internal::field::as_db_type::AsDbType;
-use rorm::internal::field::{Field, FieldProxy};
+use rorm::internal::field::Field;
+use rorm::internal::field::FieldProxy;
 use rorm::model::GetField;
 use rorm::prelude::ForeignModelByField;
-use rorm::{Model, Patch};
-use serde::{Deserialize, Serialize};
-use webauthn_rs::prelude::{AttestedPasskey, Passkey};
+use rorm::Model;
+use rorm::Patch;
+use serde::Deserialize;
+use serde::Serialize;
+use webauthn_rs::prelude::AttestedPasskey;
+use webauthn_rs::prelude::Passkey;
 
-pub trait AuthModels: Send + 'static {
+pub trait AuthModels: Send + Sync + 'static {
     type Account: Model<Primary: Field<Type: FieldType<Decoder: Send> + AsDbType + Serialize + Send>>
         + GetField<<Self::Account as Model>::Primary>
         + Send;

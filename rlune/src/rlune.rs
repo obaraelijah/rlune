@@ -2,10 +2,10 @@ use std::mem;
 use std::net::SocketAddr;
 
 use axum::Router;
+use rlune_core::re_exports::rorm::Database;
 use rlune_core::registry::builder::RegistryBuilder;
 use rlune_core::session;
 use rlune_core::RluneRouter;
-use rorm::Database;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::Level;

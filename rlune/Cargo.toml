@@ -15,7 +15,7 @@ rlune-core = { version = "~0.1", path = "../rlune-core" }
 
 # Contrib modules
 # rlune-contrib-tracing = { version = "~0.1", path = "../contrib/rlune-contrib-tracing", optional = true }
-rlune-contrib-auth = { version = "~0.1", path = "../contrib/rlune-contrib-auth", optional = true }
+# rlune-contrib-auth = { version = "~0.1", path = "../contrib/rlune-contrib-auth", optional = true }
 
 # Error handling
 thiserror = { version = "~2" }
@@ -33,5 +33,5 @@ rlune-macros = { version = "0.2.0", path = "../rlune-macros" }
 [features]
 contrib = [
     # "dep:rlune-contrib-tracing",
-    "dep:rlune-contrib-auth",
+    # "dep:rlune-contrib-auth",
 ]

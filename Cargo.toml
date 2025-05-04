@@ -14,4 +14,4 @@ members = [
 
 [workspace.dependencies]
 axum = { version = "~0.8", default-features = false }
-rorm = { version = "*", git = "https://github.com/rorm-orm/rorm", branch = "dev", default-features = false, features = ["postgres-only"] }
+rorm = { version = "*", git = "https://github.com/rorm-orm/rorm", tag = "v0.7.0-prrorm = { version = "*", git = "https://github.com/rorm-orm/rorm", branch = "dev", default-features = false, features = ["postgres-only"] }e-1", default-features = false, features = ["postgres-only"] }

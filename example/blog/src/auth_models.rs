@@ -1,7 +1,7 @@
 use rlune::contrib::auth::MaybeAttestedPasskey;
+use rorm::fields::proxy::FieldProxy;
 use rorm::fields::types::Json;
 use rorm::internal::field::Field;
-use rorm::internal::field::FieldProxy;
 use rorm::prelude::ForeignModel;
 use rorm::prelude::ForeignModelByField;
 use rorm::Model;
@@ -71,8 +71,11 @@ pub enum AuthModels {}
 impl rlune::contrib::auth::AuthModels for AuthModels {
     type Account = Account;
 
-    fn account_id() -> FieldProxy<impl Field<Type = String, Model = Self::Account>, Self::Account> {
-        Account::F.id
+    fn account_id() -> FieldProxy<(
+        impl Field<Type = String, Model = Self::Account>,
+        Self::Account,
+    )> {
+        Account.id
     }
 
     fn insertable_account(id: String) -> impl Patch<Model = Self::Account> {
@@ -87,19 +90,21 @@ impl rlune::contrib::auth::AuthModels for AuthModels {
 
     type OidcAccount = OidcAccount;
 
-    fn oidc_account_fm() -> FieldProxy<
+    fn oidc_account_fm() -> FieldProxy<(
         impl Field<
             Type = ForeignModelByField<<Self::Account as Model>::Primary>,
             Model = Self::OidcAccount,
         >,
         Self::OidcAccount,
-    > {
-        OidcAccount::F.account
+    )> {
+        OidcAccount.account
     }
 
-    fn oidc_account_id(
-    ) -> FieldProxy<impl Field<Type = String, Model = Self::OidcAccount>, Self::OidcAccount> {
-        OidcAccount::F.id
+    fn oidc_account_id() -> FieldProxy<(
+        impl Field<Type = String, Model = Self::OidcAccount>,
+        Self::OidcAccount,
+    )> {
+        OidcAccount.id
     }
 
     fn insertable_oidc_account(
@@ -115,56 +120,57 @@ impl rlune::contrib::auth::AuthModels for AuthModels {
 
         InsertableOidcAccount {
             id,
-            account: ForeignModelByField::Key(*account_pk),
+            account: ForeignModelByField(*account_pk),
         }
     }
 
     type LocalAccount = LocalAccount;
 
-    fn local_account_fm() -> FieldProxy<
+    fn local_account_fm() -> FieldProxy<(
         impl Field<
             Type = ForeignModelByField<<Self::Account as Model>::Primary>,
             Model = Self::LocalAccount,
         >,
         Self::LocalAccount,
-    > {
-        LocalAccount::F.account
+    )> {
+        LocalAccount.account
     }
 
-    fn local_account_password(
-    ) -> FieldProxy<impl Field<Type = Option<String>, Model = Self::LocalAccount>, Self::LocalAccount>
-    {
-        LocalAccount::F.password
+    fn local_account_password() -> FieldProxy<(
+        impl Field<Type = Option<String>, Model = Self::LocalAccount>,
+        Self::LocalAccount,
+    )> {
+        LocalAccount.password
     }
 
     type TotpKey = TotpKey;
 
-    fn totp_key_fm() -> FieldProxy<
+    fn totp_key_fm() -> FieldProxy<(
         impl Field<
             Type = ForeignModelByField<<Self::LocalAccount as Model>::Primary>,
             Model = Self::TotpKey,
         >,
         Self::TotpKey,
-    > {
-        TotpKey::F.local_account
+    )> {
+        TotpKey.local_account
     }
 
     type WebauthnKey = WebAuthnKey;
 
-    fn webauthn_key_fm() -> FieldProxy<
+    fn webauthn_key_fm() -> FieldProxy<(
         impl Field<
             Type = ForeignModelByField<<Self::LocalAccount as Model>::Primary>,
             Model = Self::WebauthnKey,
         >,
         Self::WebauthnKey,
-    > {
-        WebAuthnKey::F.local_account
+    )> {
+        WebAuthnKey.local_account
     }
 
-    fn webauthn_key_key() -> FieldProxy<
+    fn webauthn_key_key() -> FieldProxy<(
         impl Field<Type = Json<MaybeAttestedPasskey>, Model = Self::WebauthnKey>,
         Self::WebauthnKey,
-    > {
-        WebAuthnKey::F.key
+    )> {
+        WebAuthnKey.key
     }
 }

@@ -5,11 +5,7 @@ use std::str::FromStr;
 
 use async_trait::async_trait;
 use rorm::and;
-use rorm::delete;
 use rorm::fields::types::Json;
-use rorm::insert;
-use rorm::query;
-use rorm::update;
 use rorm::Database;
 use rorm::Model;
 use schemars::_serde_json::Value;
@@ -85,14 +81,14 @@ impl SessionStore for RormStore {
             .await
             .map_err(RormStoreError::from)?;
         loop {
-            let existing = query!(&mut tx, RluneSession)
+            let existing = rorm::query(&mut tx, RluneSession)
                 .condition(RluneSession.id.equals(session_record.id.to_string()))
                 .optional()
                 .await
                 .map_err(RormStoreError::from)?;
 
             if existing.is_none() {
-                insert!(&mut tx, RluneSession)
+                rorm::insert(&mut tx, RluneSession)
                     .return_nothing()
                     .single(&RluneSession {
                         id: session_record.id.to_string(),
@@ -127,21 +123,21 @@ impl SessionStore for RormStore {
             .await
             .map_err(RormStoreError::from)?;
 
-        let existing_session = query!(&mut tx, RluneSession)
+        let existing_session = rorm::query(&mut tx, RluneSession)
             .condition(RluneSession.id.equals(id.to_string()))
             .optional()
             .await
             .map_err(RormStoreError::from)?;
 
         if existing_session.is_some() {
-            update!(&mut tx, RluneSession)
+            rorm::update(&mut tx, RluneSession)
                 .set(RluneSession.expires_at, *expiry_date)
                 .set(RluneSession.data, Json(data.clone()))
                 .condition(RluneSession.id.equals(id.to_string()))
                 .await
                 .map_err(RormStoreError::from)?;
         } else {
-            insert!(&mut tx, RluneSession)
+            rorm::insert(&mut tx, RluneSession)
                 .single(&RluneSession {
                     id: id.to_string(),
                     expires_at: *expiry_date,
@@ -161,7 +157,7 @@ impl SessionStore for RormStore {
         debug!("Loading session");
         let db = &self.db;
 
-        let session = query!(db, RluneSession)
+        let session = rorm::query(db, RluneSession)
             .condition(and!(
                 RluneSession.id.equals(session_id.to_string()),
                 RluneSession
@@ -186,7 +182,7 @@ impl SessionStore for RormStore {
     async fn delete(&self, session_id: &Id) -> tower_sessions::session_store::Result<()> {
         let db = &self.db;
 
-        delete!(db, RluneSession)
+        rorm::delete(db, RluneSession)
             .condition(RluneSession.id.equals(session_id.to_string()))
             .await
             .map_err(RormStoreError::from)?;
@@ -201,7 +197,7 @@ impl ExpiredDeletion for RormStore {
     async fn delete_expired(&self) -> tower_sessions::session_store::Result<()> {
         let db = &self.db;
 
-        delete!(db, RluneSession)
+        rorm::delete(db, RluneSession)
             .condition(RluneSession.expires_at.less_than(OffsetDateTime::now_utc()))
             .await
             .map_err(RormStoreError::from)?;

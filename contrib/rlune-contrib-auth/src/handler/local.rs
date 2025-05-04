@@ -4,11 +4,8 @@ use rlune_core::stuff::api_error::ApiResult;
 use rlune_core::Module;
 use rlune_macros::delete;
 use rlune_macros::put;
-use rorm::crud::query::QueryBuilder;
-use rorm::crud::update::UpdateBuilder;
 use rorm::internal::field::Field;
-use rorm::FieldAccess;
-use rorm::Model;
+use rorm::{Model, Patch};
 
 use crate::AuthModels;
 use crate::AuthModule;
@@ -26,7 +23,7 @@ pub async fn set_local_password<M: AuthModels>(
 
     let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
-    let (_local_pk,) = QueryBuilder::new(&mut tx, (M::local_account_pk(),))
+    let _local_pk = rorm::query(&mut tx, M::local_account_pk())
         .condition(M::local_account_fm().equals(&account_pk))
         .optional()
         .await?
@@ -34,11 +31,13 @@ pub async fn set_local_password<M: AuthModels>(
 
     // TODO: hashing
 
-    UpdateBuilder::new(&mut tx)
-        .condition(M::local_account_fm().equals(&account_pk))
-        .set(M::local_account_password(), Some(request))
-        .exec()
-        .await?;
+    rorm::update(
+        &mut tx,
+        <M::LocalAccount as Patch>::ValueSpaceImpl::default(),
+    )
+    .set(M::local_account_password(), Some(request))
+    .condition(M::local_account_fm().equals(&account_pk))
+    .await?;
 
     tx.commit().await?;
 
@@ -52,27 +51,29 @@ pub async fn delete_local_password<M: AuthModels>(session: Session) -> ApiResult
 
     let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
-    let (local_pk,) = QueryBuilder::new(&mut tx, (M::local_account_pk(),))
+    let local_pk = rorm::query(&mut tx, M::local_account_pk())
         .condition(M::local_account_fm().equals(&account_pk))
         .optional()
         .await?
         .ok_or("User is not a local one")?;
 
-    let has_webauthn = QueryBuilder::new(&mut tx, (M::webauthn_key_key(),))
+    let has_webauthn = rorm::query(&mut tx, M::webauthn_key_key())
         .condition(M::webauthn_key_fm().equals(&local_pk))
         .all()
         .await?
         .into_iter()
-        .any(|(key,)| matches!(key.0, MaybeAttestedPasskey::Attested(_)));
+        .any(|key| matches!(key.0, MaybeAttestedPasskey::Attested(_)));
     if !has_webauthn {
         return Err("User has no other login method".into());
     }
 
-    UpdateBuilder::new(&mut tx)
-        .condition(M::local_account_fm().equals(&account_pk))
-        .set(M::local_account_password(), None)
-        .exec()
-        .await?;
+    rorm::update(
+        &mut tx,
+        <M::LocalAccount as Patch>::ValueSpaceImpl::default(),
+    )
+    .set(M::local_account_password(), None)
+    .condition(M::local_account_fm().equals(&account_pk))
+    .await?;
 
     tx.commit().await?;
     Ok(())

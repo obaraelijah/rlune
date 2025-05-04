@@ -1,28 +1,22 @@
+use crate::handler::schema::{
+    GetLoginFlowsRequest, GetLoginFlowsResponse, LocalLoginFlow, LoginLocalPasswordRequest,
+    LoginLocalWebauthnRequest, OidcLoginFlow, PublicKeyCredential,
+};
+use crate::models::AuthModels;
+use crate::module::AuthModule;
+use crate::MaybeAttestedPasskey;
 use rlune_core::re_exports::axum::extract::Query;
+
 use rlune_core::re_exports::axum::Json;
 use rlune_core::session::Session;
 use rlune_core::stuff::api_error::ApiResult;
 use rlune_core::Module;
-use rlune_macros::get;
-use rlune_macros::post;
-use rorm::crud::query::QueryBuilder;
-use rorm::internal::field::foreign_model::FieldEq_ForeignModelByField_Borrowed;
-use rorm::FieldAccess;
-use serde::Deserialize;
-use serde::Serialize;
-use webauthn_rs::prelude::AttestedPasskeyAuthentication;
-use webauthn_rs::prelude::RequestChallengeResponse;
+use rlune_macros::{get, post};
 
-use crate::handler::schema::GetLoginFlowsRequest;
-use crate::handler::schema::GetLoginFlowsResponse;
-use crate::handler::schema::LocalLoginFlow;
-use crate::handler::schema::LoginLocalPasswordRequest;
-use crate::handler::schema::LoginLocalWebauthnRequest;
-use crate::handler::schema::OidcLoginFlow;
-use crate::handler::schema::PublicKeyCredential;
-use crate::models::AuthModels;
-use crate::module::AuthModule;
-use crate::MaybeAttestedPasskey;
+use rorm::internal::field::foreign_model::FieldEq_ForeignModelByField_Borrowed;
+
+use serde::{Deserialize, Serialize};
+use webauthn_rs::prelude::{AttestedPasskeyAuthentication, RequestChallengeResponse};
 
 #[cfg(feature = "oidc")]
 mod oidc;
@@ -39,7 +33,7 @@ pub async fn get_login_flow<M: AuthModels>(
 ) -> ApiResult<Json<Option<GetLoginFlowsResponse>>> {
     let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
-    let Some((user_pk,)) = QueryBuilder::new(&mut tx, (M::account_pk(),))
+    let Some(user_pk) = rorm::query(&mut tx, M::account_pk())
         .condition(M::account_id().equals(request.identifier.as_str()))
         .optional()
         .await?
@@ -47,12 +41,12 @@ pub async fn get_login_flow<M: AuthModels>(
         return Ok(Json(None));
     };
 
-    let oidc = QueryBuilder::new(&mut tx, (M::oidc_account_pk(),))
+    let oidc = rorm::query(&mut tx, M::oidc_account_pk())
         .condition(M::oidc_account_fm().equals::<_, FieldEq_ForeignModelByField_Borrowed>(&user_pk))
         .optional()
         .await?;
 
-    let local = QueryBuilder::new(
+    let local = rorm::query(
         &mut tx,
         (M::local_account_pk(), M::local_account_password()),
     )
@@ -63,7 +57,7 @@ pub async fn get_login_flow<M: AuthModels>(
     let response = match (oidc, local) {
         (Some(_), None) => GetLoginFlowsResponse::Oidc(OidcLoginFlow {}),
         (None, Some((local_pk, password))) => {
-            let webauthn = QueryBuilder::new(&mut tx, (M::webauthn_key_key(),))
+            let webauthn = rorm::query(&mut tx, M::webauthn_key_key())
                 .condition(
                     M::webauthn_key_fm()
                         .equals::<_, FieldEq_ForeignModelByField_Borrowed>(&local_pk),
@@ -71,7 +65,7 @@ pub async fn get_login_flow<M: AuthModels>(
                 .all()
                 .await?
                 .into_iter()
-                .any(|(key,)| matches!(key.0, MaybeAttestedPasskey::Attested(_)));
+                .any(|key| matches!(key.0, MaybeAttestedPasskey::Attested(_)));
 
             GetLoginFlowsResponse::Local(LocalLoginFlow {
                 password: password.is_some(),
@@ -92,13 +86,13 @@ pub async fn login_local_webauthn<M: AuthModels>(
 ) -> ApiResult<Json<RequestChallengeResponse>> {
     let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
-    let (account_pk,) = QueryBuilder::new(&mut tx, (M::account_pk(),))
+    let account_pk = rorm::query(&mut tx, M::account_pk())
         .condition(M::account_id().equals(&request.identifier))
         .optional()
         .await?
         .ok_or("Account not found")?;
 
-    let (local_account_pk,) = QueryBuilder::new(&mut tx, (M::local_account_pk(),))
+    let local_account_pk = rorm::query(&mut tx, M::local_account_pk())
         .condition(
             M::local_account_fm().equals::<_, FieldEq_ForeignModelByField_Borrowed>(&account_pk),
         )
@@ -106,7 +100,7 @@ pub async fn login_local_webauthn<M: AuthModels>(
         .await?
         .ok_or("Not a local account")?;
 
-    let keys = QueryBuilder::new(&mut tx, (M::webauthn_key_key(),))
+    let keys = rorm::query(&mut tx, M::webauthn_key_key())
         .condition(
             M::webauthn_key_fm()
                 .equals::<_, FieldEq_ForeignModelByField_Borrowed>(&local_account_pk),
@@ -115,7 +109,7 @@ pub async fn login_local_webauthn<M: AuthModels>(
         .await?;
     let keys = keys
         .into_iter()
-        .filter_map(|(json,)| match json.0 {
+        .filter_map(|json| match json.0 {
             MaybeAttestedPasskey::NotAttested(_) => None,
             MaybeAttestedPasskey::Attested(key) => Some(key),
         })
@@ -162,13 +156,13 @@ pub async fn finish_login_local_webauthn<M: AuthModels>(
 
     let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
-    let (account_pk,) = QueryBuilder::new(&mut tx, (M::account_pk(),))
+    let account_pk = rorm::query(&mut tx, M::account_pk())
         .condition(M::account_id().equals(&identifier))
         .optional()
         .await?
         .ok_or("Account not found")?;
 
-    let (local_account_pk,) = QueryBuilder::new(&mut tx, (M::local_account_pk(),))
+    let local_account_pk = rorm::query(&mut tx, M::local_account_pk())
         .condition(
             M::local_account_fm().equals::<_, FieldEq_ForeignModelByField_Borrowed>(&account_pk),
         )
@@ -176,7 +170,7 @@ pub async fn finish_login_local_webauthn<M: AuthModels>(
         .await?
         .ok_or("Not a local account")?;
 
-    let keys = QueryBuilder::new(&mut tx, (M::webauthn_key_key(),))
+    let keys = rorm::query(&mut tx, M::webauthn_key_key())
         .condition(
             M::webauthn_key_fm()
                 .equals::<_, FieldEq_ForeignModelByField_Borrowed>(&local_account_pk),
@@ -185,7 +179,7 @@ pub async fn finish_login_local_webauthn<M: AuthModels>(
         .await?;
     let _used_key = keys
         .into_iter()
-        .find_map(|(json,)| match json.0 {
+        .find_map(|json| match json.0 {
             MaybeAttestedPasskey::NotAttested(_) => None,
             MaybeAttestedPasskey::Attested(key) => {
                 (key.cred_id() == authentication_result.cred_id()).then_some(key)
@@ -207,13 +201,13 @@ pub async fn login_local_password<M: AuthModels>(
 ) -> ApiResult<()> {
     let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
 
-    let (account_pk,) = QueryBuilder::new(&mut tx, (M::account_pk(),))
+    let (account_pk,) = rorm::query(&mut tx, (M::account_pk(),))
         .condition(M::account_id().equals(&request.identifier))
         .optional()
         .await?
         .ok_or("Account not found")?;
 
-    let (local_account_password,) = QueryBuilder::new(&mut tx, (M::local_account_password(),))
+    let (local_account_password,) = rorm::query(&mut tx, (M::local_account_password(),))
         .condition(
             M::local_account_fm().equals::<_, FieldEq_ForeignModelByField_Borrowed>(&account_pk),
         )

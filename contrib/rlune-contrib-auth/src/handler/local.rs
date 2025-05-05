@@ -4,40 +4,35 @@ use rlune_core::stuff::api_error::ApiResult;
 use rlune_core::Module;
 use rlune_macros::delete;
 use rlune_macros::put;
-use rorm::internal::field::Field;
-use rorm::{Model, Patch};
 
-use crate::AuthModels;
+use crate::models::LocalAccount;
+use crate::models::WebAuthnKey;
 use crate::AuthModule;
 use crate::MaybeAttestedPasskey;
 
 type SetLocalPasswordRequest = String;
 
 #[put("/local/password", core_crate = "::rlune_core")]
-pub async fn set_local_password<M: AuthModels>(
+pub async fn set_local_password(
     session: Session,
     Json(request): Json<SetLocalPasswordRequest>,
 ) -> ApiResult<()> {
-    let account_pk: <<M::Account as Model>::Primary as Field>::Type =
-        session.get("account").await?.ok_or("Not logged-in")?;
+    let account_pk: i64 = session.get("account").await?.ok_or("Not logged-in")?;
 
-    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
+    let mut tx = AuthModule::global().db.start_transaction().await?;
 
-    let _local_pk = rorm::query(&mut tx, M::local_account_pk())
-        .condition(M::local_account_fm().equals(&account_pk))
+    let _local_pk = rorm::query(&mut tx, LocalAccount.pk)
+        .condition(LocalAccount.account.equals(&account_pk))
         .optional()
         .await?
         .ok_or("User is not a local one")?;
 
     // TODO: hashing
 
-    rorm::update(
-        &mut tx,
-        <M::LocalAccount as Patch>::ValueSpaceImpl::default(),
-    )
-    .set(M::local_account_password(), Some(request))
-    .condition(M::local_account_fm().equals(&account_pk))
-    .await?;
+    rorm::update(&mut tx, LocalAccount)
+        .set(LocalAccount.password, Some(request))
+        .condition(LocalAccount.account.equals(&account_pk))
+        .await?;
 
     tx.commit().await?;
 
@@ -45,20 +40,19 @@ pub async fn set_local_password<M: AuthModels>(
 }
 
 #[delete("/local/password", core_crate = "::rlune_core")]
-pub async fn delete_local_password<M: AuthModels>(session: Session) -> ApiResult<()> {
-    let account_pk: <<M::Account as Model>::Primary as Field>::Type =
-        session.get("account").await?.ok_or("Not logged-in")?;
+pub async fn delete_local_password(session: Session) -> ApiResult<()> {
+    let account_pk: i64 = session.get("account").await?.ok_or("Not logged-in")?;
 
-    let mut tx = AuthModule::<M>::global().db.start_transaction().await?;
+    let mut tx = AuthModule::global().db.start_transaction().await?;
 
-    let local_pk = rorm::query(&mut tx, M::local_account_pk())
-        .condition(M::local_account_fm().equals(&account_pk))
+    let local_pk = rorm::query(&mut tx, LocalAccount.pk)
+        .condition(LocalAccount.account.equals(&account_pk))
         .optional()
         .await?
         .ok_or("User is not a local one")?;
 
-    let has_webauthn = rorm::query(&mut tx, M::webauthn_key_key())
-        .condition(M::webauthn_key_fm().equals(&local_pk))
+    let has_webauthn = rorm::query(&mut tx, WebAuthnKey.key)
+        .condition(WebAuthnKey.local_account.equals(&local_pk))
         .all()
         .await?
         .into_iter()
@@ -67,13 +61,10 @@ pub async fn delete_local_password<M: AuthModels>(session: Session) -> ApiResult
         return Err("User has no other login method".into());
     }
 
-    rorm::update(
-        &mut tx,
-        <M::LocalAccount as Patch>::ValueSpaceImpl::default(),
-    )
-    .set(M::local_account_password(), None)
-    .condition(M::local_account_fm().equals(&account_pk))
-    .await?;
+    rorm::update(&mut tx, LocalAccount)
+        .set(LocalAccount.password, None)
+        .condition(LocalAccount.account.equals(&account_pk))
+        .await?;
 
     tx.commit().await?;
     Ok(())

@@ -1,5 +1,3 @@
-mod auth_models;
-
 use std::any::type_name;
 use std::any::Any;
 use std::marker::PhantomData;
@@ -15,8 +13,6 @@ use rlune::get;
 use rlune::Rlune;
 use tracing::error;
 
-use crate::auth_models::AuthModels;
-
 #[get("/index")]
 async fn test<const N: usize, T: 'static>() -> String {
     format!("<{N}, {}>", type_name::<T>())
@@ -27,13 +23,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing_panic_hook();
 
     Rlune::new()
-        .register_module::<AuthModule<AuthModels>>()
+        .register_module::<AuthModule>()
         .init_modules()
         .await?
-        .add_routes(RluneRouter::new().nest(
-            "/auth",
-            AuthModule::<AuthModels>::global().handler.as_router(),
-        ))
+        .add_routes(RluneRouter::new().nest("/auth", AuthModule::global().handler.as_router()))
         .add_routes(RluneRouter::new().handler(test::<1337, ()>(PhantomData)))
         .start(SocketAddr::from_str("127.0.0.1:8080")?)
         .await?;

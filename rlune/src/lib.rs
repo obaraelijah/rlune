@@ -1,6 +1,6 @@
 #[cfg(feature = "contrib")]
 pub mod contrib {
-    // pub use rlune_contrib_auth as auth;
+    pub use rlune_contrib_auth as auth;
     // pub use rlune_contrib_tracing as tracing;
 }
 

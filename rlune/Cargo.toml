@@ -29,9 +29,16 @@ tracing-subscriber = { version = "~0.3", features = ["env-filter"] }
 
 swaggapi = { version = "0.2.2", path = "../swaggapi" }
 rlune-macros = { version = "0.2.0", path = "../rlune-macros" }
+openapiv3 = { version = "~2", optional = true }
+serde_json = { version = "~1", optional = true }
 
 [features]
 contrib = [
     # "dep:rlune-contrib-tracing",
     "dep:rlune-contrib-auth",
+]
+
+openapi = [
+    "dep:openapiv3",
+    "serde_json"
 ]

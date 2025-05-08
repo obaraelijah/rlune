@@ -1,6 +1,5 @@
 use std::any::type_name;
 use std::any::Any;
-use std::marker::PhantomData;
 use std::net::SocketAddr;
 use std::panic;
 use std::panic::Location;
@@ -13,7 +12,6 @@ use rlune::core::re_exports::axum::Json;
 use rlune::core::Module;
 use rlune::core::RluneRouter;
 use rlune::get;
-use rlune::openapi::OpenAPI;
 use rlune::Rlune;
 use tracing::error;
 
@@ -38,8 +36,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_routes(RluneRouter::new().nest("/auth", AuthModule::global().handler.as_router()))
         .add_routes(
             RluneRouter::new()
-                .handler(test::<1337, ()>(PhantomData))
-                .handler(openapi(PhantomData)),
+                .handler(test::<1337, ()>)
+                .handler(openapi),
         )
         .start(SocketAddr::from_str("127.0.0.1:8080")?)
         .await?;

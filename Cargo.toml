@@ -8,7 +8,6 @@ members = [
     "./contrib/rlune-contrib-auth",
     # "./contrib/rlune-contrib-tracing",
     "./example/blog",
-    "swaggapi",  
 ]
 
 [workspace.dependencies]

@@ -28,4 +28,3 @@ pub mod openapi;
 mod rlune;
 
 pub use macro_docs::*;
-pub use swaggapi;

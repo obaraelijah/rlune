@@ -1,4 +1,5 @@
 pub use self::router::RluneRouter;
+pub use self::schemaless_json::SchemalessJson;
 pub use crate::module::*;
 
 pub mod re_exports {
@@ -14,6 +15,7 @@ pub mod module;
 #[doc(hidden)]
 pub mod router;
 pub mod schema_generator;
+mod schemaless_json;
 pub mod session;
 pub mod stuff;
 mod util_macros;

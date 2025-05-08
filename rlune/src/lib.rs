@@ -23,9 +23,9 @@ pub use crate::rlune::*;
 
 pub mod error;
 mod macro_docs;
-mod rlune;
 #[cfg(feature = "openapi")]
 pub mod openapi;
+mod rlune;
 
 pub use macro_docs::*;
 pub use swaggapi;

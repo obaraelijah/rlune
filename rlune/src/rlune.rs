@@ -1,19 +1,21 @@
-use crate::core::Module;
-use crate::error::RluneError;
+use std::mem;
+use std::net::SocketAddr;
+use std::sync::RwLock;
+
 use rlune_core::re_exports::rorm::Database;
 use rlune_core::registry::builder::RegistryBuilder;
 use rlune_core::router::MutHandlerMeta;
 use rlune_core::session;
 use rlune_core::RluneRouter;
-use std::mem;
-use std::net::SocketAddr;
-use std::sync::RwLock;
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
+
+use crate::core::Module;
+use crate::error::RluneError;
 
 #[non_exhaustive]
 pub struct Rlune;
@@ -83,9 +85,7 @@ impl RouterBuilder {
     }
 }
 
-
 static HANDLERS: RwLock<&'static [MutHandlerMeta]> = RwLock::new(&[]);
-
 
 /// Quick and dirty solution to expose the registered handlers after startup
 #[doc(hidden)]

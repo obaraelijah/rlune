@@ -1,7 +1,7 @@
 [package]
 name = "rlune-core"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 authors = ["Elijah Samson <git@obaraelijah.dev>"]
 license = "MPL-2.0"
 description = "Core concepts for rlune like trait definitions"

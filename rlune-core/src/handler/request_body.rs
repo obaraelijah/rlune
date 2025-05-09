@@ -9,7 +9,7 @@ use crate::schema_generator::SchemaGenerator;
 
 /// Describes the behaviour of a type implementing [`FromRequest`](axum::extract::FromRequest)
 pub trait RequestBody: ShouldBeRequestBody {
-    fn body(_gen: &mut SchemaGenerator) -> (Mime, Option<Schema>);
+    fn body(_generator: &mut SchemaGenerator) -> (Mime, Option<Schema>);
 }
 
 pub trait ShouldBeRequestBody {}

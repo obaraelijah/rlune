@@ -2,9 +2,9 @@
 
 use std::any::type_name;
 
+use crate::module::Module;
 use crate::module::registry::builder::RegistryBuilder;
 use crate::module::registry::module_set::OwnedModulesSet;
-use crate::module::Module;
 use crate::util_macros::impl_tuples;
 
 /// A tuple of [`Module`]s which need to be initialized before another one which depends on them.

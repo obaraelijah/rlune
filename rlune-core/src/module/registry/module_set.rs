@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use std::hash::BuildHasher;
 use std::hash::Hasher;
 
-use crate::module::registry::DynModule;
 use crate::module::Module;
+use crate::module::registry::DynModule;
 
 pub struct ModuleSet<M> {
     set: HashMap<TypeId, M, BuildXorHasher>,

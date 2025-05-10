@@ -8,7 +8,8 @@ use rlune_core::router::MutHandlerMeta;
 use rlune_core::session;
 use rlune_core::RluneRouter;
 use tokio::net::TcpListener;
-use tracing::{debug, info};
+use tracing::debug;
+use tracing::info;
 use tracing::Level;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -37,11 +38,11 @@ impl ModuleBuilder {
             .with(EnvFilter::try_from_default_env().unwrap_or(EnvFilter::new(Level::INFO.as_str())))
             .with(tracing_subscriber::fmt::layer());
 
-            if registry.try_init().is_ok() {
-                debug!("Initialized rlune's subscriber");
-            } else {
-                debug!("Using external subscriber");
-            }
+        if registry.try_init().is_ok() {
+            debug!("Initialized rlune's subscriber");
+        } else {
+            debug!("Using external subscriber");
+        }
 
         let mut this = ModuleBuilder::default();
         this.register_module::<Database>();

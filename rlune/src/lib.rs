@@ -22,6 +22,8 @@ pub mod core {
 pub use crate::rlune::*;
 
 pub mod error;
+#[cfg(feature = "graceful-shutdown")]
+mod graceful_shutdown;
 mod macro_docs;
 #[cfg(feature = "openapi")]
 pub mod openapi;

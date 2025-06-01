@@ -2,7 +2,6 @@ use std::mem;
 use std::net::SocketAddr;
 use std::sync::RwLock;
 
-use rlune_core::re_exports::rorm::Database;
 use rlune_core::registry::builder::RegistryBuilder;
 use rlune_core::router::MutHandlerMeta;
 use rlune_core::session;
@@ -44,14 +43,12 @@ impl ModuleBuilder {
             debug!("Using external subscriber");
         }
 
-        let mut this = ModuleBuilder::default();
-        this.register_module::<Database>();
-        this
+        ModuleBuilder::default()
     }
 
     /// Register a module
-    pub fn register_module<T: Module>(&mut self) -> &mut Self {
-        self.modules.register_module::<T>();
+    pub fn register_module<T: Module>(&mut self, setup: T::Setup) -> &mut Self {
+        self.modules.register_module::<T>(setup);
         self
     }
 

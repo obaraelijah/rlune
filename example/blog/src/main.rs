@@ -12,6 +12,7 @@ use rlune::core::re_exports::axum::Json;
 use rlune::core::Module;
 use rlune::core::RluneRouter;
 use rlune::get;
+use rlune::rorm::Database;
 use rlune::Rlune;
 use tracing::error;
 
@@ -30,7 +31,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing_panic_hook();
 
     Rlune::new()
-        .register_module::<AuthModule>()
+        .register_module::<Database>(Default::default())
+        .register_module::<AuthModule>(Default::default())
         .init_modules()
         .await?
         .add_routes(RluneRouter::new().nest("/auth", AuthModule::global().handler.as_router()))

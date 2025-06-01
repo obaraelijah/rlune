@@ -31,11 +31,8 @@ impl RegistryBuilder {
         Self::default()
     }
 
-    fn contains_module<T: Module>(&self) -> bool {
-        self.modules
-            .iter()
-            .find(|(id, _)| *id == TypeId::of::<T>())
-            .is_some()
+    fn contains_module(&self, type_id: TypeId) -> bool {
+        self.modules.iter().find(|(id, _)| *id == type_id).is_some()
     }
 
     /// Adds a new module to the `RegistryBuilder`
@@ -43,16 +40,20 @@ impl RegistryBuilder {
     /// Calling this method twice with the same `T` is not an error but will only add it once.
     #[instrument(level = "trace", name = "RegistryBuilder::register_module", skip(self), fields(module.name = type_name::<T>()))]
     pub fn register_module<T: Module>(&mut self) -> &mut Self {
-        if self.contains_module::<T>() {
-            debug!(module.name = type_name::<T>(), "Module already registered");
-            return self;
-        } else {
-            <T::Dependencies as ModuleDependencies>::register(self);
-
-            debug_assert!(
-                !self.contains_module::<T>(),
-                "Module dependencies form a cycle"
+        if self.contains_module(TypeId::of::<T>()) {
+            panic!(
+                "The module '{}' is being registered twice",
+                type_name::<T>()
             );
+        } else {
+            <T::Dependencies as ModuleDependencies>::for_each(|dependency_id, dependency_name| {
+                if !self.contains_module(dependency_id) {
+                    panic!(
+                        "Module '{}' depends on '{dependency_name}'. Please register it first.",
+                        type_name::<T>(),
+                    );
+                }
+            });
 
             self.modules.push((
                 TypeId::of::<T>(),

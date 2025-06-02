@@ -127,7 +127,15 @@ impl RluneRouter {
     }
 
     /// Calls [`Router::nest`] while preserving api information
+    #[track_caller]
     pub fn nest(mut self, path: &str, other: RluneRouter) -> Self {
+        if path.is_empty() || path == "/" {
+            panic!("Nesting at the root is no longer supported. Use merge instead.");
+        }
+        if !path.starts_with('/') {
+            panic!("Paths must start with a slash.");
+        }
+
         for mut handler in other.handlers {
             // Code taken from `path_for_nested_route` in `axum/src/routing/path_router.rs`
             handler.path = if path.ends_with('/') {
@@ -140,6 +148,7 @@ impl RluneRouter {
 
             self.push_handler(handler);
         }
+        
         self.router = self.router.nest(path, other.router);
         self
     }

@@ -148,7 +148,7 @@ impl RluneRouter {
 
             self.push_handler(handler);
         }
-        
+
         self.router = self.router.nest(path, other.router);
         self
     }

@@ -1,6 +1,7 @@
 use rlune_core::re_exports::axum::Json;
 use rlune_core::session::Session;
-use rlune_core::stuff::api_error::{ApiError, ApiResult};
+use rlune_core::stuff::api_error::ApiError;
+use rlune_core::stuff::api_error::ApiResult;
 use rlune_core::Module;
 use rlune_macros::delete;
 use rlune_macros::put;

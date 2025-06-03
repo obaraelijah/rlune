@@ -2,10 +2,11 @@ use std::future::poll_fn;
 use std::future::Future;
 use std::io;
 use std::pin::Pin;
-use tracing::{debug, warn};
 
 use futures_lite::Stream;
 use signal_hook_tokio::Signals;
+use tracing::debug;
+use tracing::warn;
 
 /// Constructs a future with resolves after receiving a [termination signal](signal_hook::consts::TERM_SIGNALS)
 ///

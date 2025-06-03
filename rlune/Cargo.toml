@@ -17,7 +17,6 @@ rlune-core = { version = "~0.1", path = "../rlune-core" }
 rorm = { workspace = true }
 
 # Contrib modules
-# rlune-contrib-tracing = { version = "~0.1", path = "../contrib/rlune-contrib-tracing", optional = true }
 rlune-contrib-auth = { version = "~0.1", path = "../contrib/rlune-contrib-auth", optional = true }
 
 # Error handling
@@ -49,7 +48,6 @@ default = [
     "panic-hook",
 ]
 contrib = [
-    # "dep:rlune-contrib-tracing",
     "dep:rlune-contrib-auth",
 ]
 openapi = [

@@ -6,7 +6,6 @@ members = [
     "rlune-macros",
     "rlune-core",
     "./contrib/rlune-contrib-auth",
-    # "./contrib/rlune-contrib-tracing",
     "./example/blog",
 ]
 

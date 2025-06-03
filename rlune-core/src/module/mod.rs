@@ -9,8 +9,8 @@ use std::future::Future;
 
 use thiserror::Error;
 
-use crate::module::registry::ModuleDependencies;
-use crate::module::registry::Registry;
+pub use crate::module::impls::database::DatabaseSetup;
+use crate::module::registry::{ModuleDependencies, Registry};
 
 mod impls;
 pub mod registry;

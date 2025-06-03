@@ -1,0 +1,12 @@
+[package]
+name = "rlune-contrib-oauth"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+rlune-core = { version = "*", path = "../../rlune-core" }
+rlune-macros = { version = "*", path = "../../rlune-macros" }
+
+# Serialization support
+serde = { version = "~1", features = ["derive"] }
+schemars = { version = "~0.8" }

@@ -18,6 +18,7 @@ rorm = { workspace = true }
 
 # Contrib modules
 rlune-contrib-auth = { version = "~0.1", path = "../contrib/rlune-contrib-auth", optional = true }
+rlune-contrib-oauth = { version = "~0.1", path = "../contrib/rlune-contrib-oauth", optional = true }
 
 # Error handling
 thiserror = { version = "~2" }
@@ -49,6 +50,7 @@ default = [
 ]
 contrib = [
     "dep:rlune-contrib-auth",
+    "dep:rlune-contrib-oauth",
 ]
 openapi = [
     "dep:openapiv3",

@@ -10,7 +10,8 @@ use std::future::Future;
 use thiserror::Error;
 
 pub use crate::module::impls::database::DatabaseSetup;
-use crate::module::registry::{ModuleDependencies, Registry};
+use crate::module::registry::ModuleDependencies;
+use crate::module::registry::Registry;
 
 mod impls;
 pub mod registry;

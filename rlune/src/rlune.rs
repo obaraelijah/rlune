@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 use std::sync::RwLock;
 
 use rlune_core::registry::builder::RegistryBuilder;
-use rlune_core::router::MutHandlerMeta;
+use rlune_core::router::RluneRoute;
 use rlune_core::session;
 use rlune_core::RluneRouter;
 use tokio::net::TcpListener;
@@ -97,10 +97,10 @@ impl RouterBuilder {
     }
 }
 
-static HANDLERS: RwLock<&'static [MutHandlerMeta]> = RwLock::new(&[]);
+static HANDLERS: RwLock<&'static [RluneRoute]> = RwLock::new(&[]);
 
 /// Quick and dirty solution to expose the registered handlers after startup
 #[doc(hidden)]
-pub fn get_routes() -> &'static [MutHandlerMeta] {
+pub fn get_routes() -> &'static [RluneRoute] {
     *HANDLERS.read().unwrap()
 }

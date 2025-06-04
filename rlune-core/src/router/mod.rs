@@ -1,5 +1,4 @@
 use std::convert::Infallible;
-use std::ops::Deref;
 
 use axum::extract::Request;
 use axum::response::IntoResponse;
@@ -20,7 +19,7 @@ use crate::handler::RluneHandler;
 #[derive(Debug, Default)]
 pub struct RluneRouter {
     /// The contained handlers
-    handlers: Vec<MutHandlerMeta>,
+    handlers: Vec<RluneRoute>,
 
     /// The underlying axum router
     router: Router,
@@ -63,7 +62,7 @@ impl RluneRouter {
 
     /// Add a handler to the router
     pub fn handler(mut self, handler: impl RluneHandler) -> Self {
-        self.push_handler(MutHandlerMeta::new(handler.meta()));
+        self.push_handler(RluneRoute::new(handler.meta()));
         self.router = self
             .router
             .route(&handler.meta().path, handler.method_router());
@@ -88,8 +87,8 @@ impl RluneRouter {
     //     self
     // }
 
-    /// Adds a [`MutHandlerMeta`] after adding this router's `path`, `tags` and `pages` to it
-    fn push_handler(&mut self, mut handler: MutHandlerMeta) {
+    /// Adds a [`RluneRoute`] after adding this router's `path`, `tags` and `pages` to it
+    fn push_handler(&mut self, mut handler: RluneRoute) {
         if !self.path.is_empty() {
             handler.path = format!("{}{}", self.path, handler.path);
         }
@@ -98,7 +97,7 @@ impl RluneRouter {
         self.handlers.push(handler);
     }
 
-    pub fn finish(self) -> (Router, Vec<MutHandlerMeta>) {
+    pub fn finish(self) -> (Router, Vec<RluneRoute>) {
         // for mut handler in self.handlers {
         //     handler.path = framework_path_to_openapi(handler.path);
         //
@@ -193,32 +192,28 @@ impl RluneRouter {
     }
 }
 
-/// A wrapped [`HandlerMeta`] used inside [`RluneRouter`] to allow modifications.
+/// A route associates a url and method with a handler
+///
+/// It also stores extensions which can be used for reflection.
 #[derive(Debug)]
-pub struct MutHandlerMeta {
-    /// The original unmodified [`HandlerMeta`]
-    pub original: HandlerMeta,
+pub struct RluneRoute {
+    /// Meta information about the route's handler
+    ///
+    /// This includes the route's method
+    pub handler: HandlerMeta,
 
-    /// The handler's modified path
+    /// The route's path i.e. url without the host information
     pub path: String,
 }
 
-impl MutHandlerMeta {
-    /// Constructs a new `MutHandlerMeta`
+impl RluneRoute {
+    /// Constructs a new `RluneRoute`
     pub fn new(original: HandlerMeta) -> Self {
         Self {
             path: original.path.to_string(),
             // tags: PtrSet::from_iter(original.tags.iter().copied()),
             // pages: PtrSet::new(),
-            original,
+            handler: original,
         }
-    }
-}
-
-impl Deref for MutHandlerMeta {
-    type Target = HandlerMeta;
-
-    fn deref(&self) -> &Self::Target {
-        &self.original
     }
 }

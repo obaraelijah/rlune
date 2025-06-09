@@ -7,9 +7,12 @@ use axum::routing::Router;
 use tower::Layer;
 use tower::Service;
 
+pub use self::extension::RouteExtension;
+pub use self::extension::RouteExtensions;
 use crate::handler::HandlerMeta;
 use crate::handler::RluneHandler;
-// use crate::{SwaggapiPage, PAGE_OF_EVERYTHING};
+
+mod extension;
 
 /// An `RluneRouter` combines several [`SwaggapiHandler`] under a common path.
 ///
@@ -23,38 +26,26 @@ pub struct RluneRouter {
 
     /// The underlying axum router
     router: Router,
-    /* Parameters added to new handlers */
-    //
-    // /// Changes have to be applied to already existing `handlers` manually
-    // pages: Vec<&'static SwaggapiPage>,
-    //
-    // /// Changes have to be applied to already existing `handlers` manually
-    // tags: Vec<&'static str>,
+    /// Route extensions implicitly added to all routes added to this router
+    extensions: RouteExtensions,
 }
 
 impl RluneRouter {
-    /// Create a new router
-    ///
-    /// It wraps an axum [`Router`] internally and should be added to your application's router using [`Router::merge`]:
-    /// ```rust
-    /// # use axum::Router;
-    /// # use swaggapi::RluneRouter;
-    /// let app = Router::new().merge(RluneRouter::new("/api"));
-    /// ```
+    /// Creates a new router
     ///
     /// TODO: update these docs
     pub fn new() -> Self {
         Self::default()
     }
 
-    // /// Create a new router with a tag
-    // ///
-    // /// (Shorthand for `RluneRouter::new().tag(...)`)
-    // pub fn with_tag(tag: &'static str) -> Self {
-    //     Self::new().tag(tag)
-    // }
+    /// Creates a new router with an extension
+    ///
+    /// (Shorthand for `RluneRouter::new().extension(...)`)
+    pub fn with_extension(extension: impl RouteExtension) -> Self {
+        Self::new().extension(extension)
+    }
 
-    /// Add a handler to the router
+    /// Adds a handler to the router
     pub fn handler(mut self, handler: impl RluneHandler) -> Self {
         self.push_handler(RluneRoute::new(handler.meta()));
         self.router = self
@@ -63,28 +54,23 @@ impl RluneRouter {
         self
     }
 
-    // /// Attach a [`SwaggapiPage`] this router's handlers will be added to
-    // pub fn page(mut self, page: &'static SwaggapiPage) -> Self {
-    //     self.pages.push(page);
-    //     for handler in &mut self.handlers {
-    //         handler.pages.insert(page);
-    //     }
-    //     self
-    // }
-    //
-    // /// Add a tag to all of this router's handlers
-    // pub fn tag(mut self, tag: &'static str) -> Self {
-    //     self.tags.push(tag);
-    //     for handler in &mut self.handlers {
-    //         handler.tags.insert(tag);
-    //     }
-    //     self
-    // }
+    /// Adds a `RouteExtension` to every handler added to this router.
+    ///
+    /// The extension will be added to all handlers,
+    /// regardless of whether the handler was added before or after this method was called.
+    ///
+    /// If an extension of this type has already been added then the two extensions will be merged.
+    pub fn extension(mut self, extension: impl RouteExtension) -> Self {
+        for handler in &mut self.handlers {
+            handler.extensions.insert(extension.clone());
+        }
+        self.extensions.insert(extension);
+        self
+    }
 
     /// Adds a [`RluneRoute`] after adding this router's `path`, `tags` and `pages` to it
     fn push_handler(&mut self, mut handler: RluneRoute) {
-        // handler.tags.extend(self.tags.iter().copied());
-        // handler.pages.extend(self.pages.iter().copied());
+        handler.extensions.merge(&self.extensions);
         self.handlers.push(handler);
     }
 
@@ -195,6 +181,11 @@ pub struct RluneRoute {
 
     /// The route's path i.e. url without the host information
     pub path: String,
+
+    /// Arbitrary additional meta information associated with the route
+    ///
+    /// For example openapi tags.
+    pub extensions: RouteExtensions,
 }
 
 impl RluneRoute {
@@ -205,6 +196,7 @@ impl RluneRoute {
             // tags: PtrSet::from_iter(original.tags.iter().copied()),
             // pages: PtrSet::new(),
             handler: original,
+            extensions: RouteExtensions::default(),
         }
     }
 }

@@ -18,11 +18,53 @@ use openapiv3::Schema;
 use openapiv3::SchemaKind;
 use openapiv3::StatusCode;
 use rlune_core::re_exports::schemars;
+use rlune_core::router::RouteExtension;
 use rlune_core::schema_generator::SchemaGenerator;
+use rlune_core::RluneRouter;
 use tracing::debug;
 use tracing::warn;
 
 use crate::get_routes;
+
+/// Extension trait for [`RluneRouter`]
+///
+/// It provides convenient methods for adding openapi related metadata
+/// to a route. (For example tags)
+pub trait OpenapiRouterExt {
+    /// Adds a tag to all handlers in this router
+    fn openapi_tag(self, tag: &'static str) -> Self;
+
+    /// Creates a new router with a tag
+    ///
+    /// (Shorthand for `RluneRouter::new().openapi_tag(...)`)
+    fn with_openapi_tag(tag: &'static str) -> Self;
+}
+
+/// A [`RouteExtension`] containing openapi related metadata
+#[derive(Debug, Clone, Default)]
+pub struct OpenapiExtension {
+    pub tags: Vec<&'static str>,
+}
+
+impl RouteExtension for OpenapiExtension {
+    fn merge(&mut self, other: &Self) {
+        for tag in &other.tags {
+            if !self.tags.contains(tag) {
+                self.tags.push(tag);
+            }
+        }
+    }
+}
+
+impl OpenapiRouterExt for RluneRouter {
+    fn openapi_tag(self, tag: &'static str) -> Self {
+        self.extension(OpenapiExtension { tags: vec![tag] })
+    }
+
+    fn with_openapi_tag(tag: &'static str) -> Self {
+        Self::new().openapi_tag(tag)
+    }
+}
 
 pub fn get_openapi() -> &'static OpenAPI {
     static OPENAPI: OnceLock<OpenAPI> = OnceLock::new();
@@ -34,6 +76,11 @@ fn generate_openapi() -> OpenAPI {
     let mut paths = Paths::default();
 
     for route in get_routes() {
+        let openapi_ext = route
+            .extensions
+            .get()
+            .unwrap_or(const { &OpenapiExtension { tags: Vec::new() } });
+
         let ReferenceOr::Item(path) = paths
             .paths
             .entry(route.path.to_string())
@@ -65,6 +112,7 @@ fn generate_openapi() -> OpenAPI {
         }
         operation.operation_id = Some(route.handler.ident.to_string());
         operation.deprecated = route.handler.deprecated;
+        // TODO: delete this old tag system?
         operation.tags = route
             .handler
             .tags
@@ -72,6 +120,9 @@ fn generate_openapi() -> OpenAPI {
             .copied()
             .map(String::from)
             .collect();
+        operation
+            .tags
+            .extend(openapi_ext.tags.iter().copied().map(String::from));
 
         if let Some(response_body) = route.handler.response_body.as_ref() {
             for (status_code, body) in (response_body.body)(&mut schemas) {
@@ -198,7 +249,7 @@ fn generate_openapi() -> OpenAPI {
                     }));
             }
         }
-        for _part in &route.handler.response_parts {
+        for part in &route.handler.response_parts {
             // TODO
         }
     }

@@ -1,8 +1,5 @@
 use std::any::type_name;
-use std::any::Any;
 use std::net::SocketAddr;
-use std::panic;
-use std::panic::Location;
 use std::str::FromStr;
 
 use rlune::contrib::auth::AuthModule;
@@ -12,9 +9,9 @@ use rlune::core::re_exports::axum::Json;
 use rlune::core::Module;
 use rlune::core::RluneRouter;
 use rlune::get;
+use rlune::openapi::OpenapiRouterExt;
 use rlune::rorm::Database;
 use rlune::Rlune;
-use tracing::error;
 
 #[get("/index")]
 async fn test<const N: usize, T: 'static>() -> String {
@@ -33,9 +30,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register_module::<AuthModule>(Default::default())
         .init_modules()
         .await?
-        .add_routes(RluneRouter::new().nest("/auth", AuthModule::global().handler.as_router()))
+        .add_routes(
+            RluneRouter::with_openapi_tag("Auth Module")
+                .nest("/auth", AuthModule::global().handler.as_router()),
+        )
         .add_routes(
             RluneRouter::new()
+                .openapi_tag("Main")
                 .handler(test::<1337, ()>)
                 .handler(openapi),
         )

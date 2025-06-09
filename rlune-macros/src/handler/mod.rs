@@ -1,7 +1,5 @@
 use std::str::FromStr;
 
-use proc_macro2::Delimiter;
-use proc_macro2::Group;
 use proc_macro2::Ident;
 use proc_macro2::Span;
 use proc_macro2::TokenStream;
@@ -55,12 +53,6 @@ pub fn handler(
         .remove(&Ident::new("path", Span::call_site()))
         .or_else(|| positional.next())
         .unwrap();
-    let tags = keyword
-        .remove(&Ident::new("tags", Span::call_site()))
-        .unwrap_or(TokenTree::Group(Group::new(
-            Delimiter::Bracket,
-            TokenStream::new(),
-        )));
     let core_crate = match keyword.remove(&Ident::new("core_crate", Span::call_site())) {
         None => quote! { ::rlune::core },
         Some(value) => {
@@ -282,7 +274,6 @@ pub fn handler(
                         #doc,
                     )*],
                     ident: stringify!(#func_ident),
-                    tags: &#tags,
                     request_parts: {
                         let mut x = ::std::vec::Vec::new();
                         #(

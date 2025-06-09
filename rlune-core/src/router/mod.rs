@@ -50,7 +50,7 @@ impl RluneRouter {
         self.push_handler(RluneRoute::new(handler.meta()));
         self.router = self
             .router
-            .route(&handler.meta().path, handler.method_router());
+            .route(handler.meta().path, handler.method_router());
         self
     }
 

@@ -7,7 +7,6 @@ use rlune_core::stuff::api_error::ApiError;
 use rlune_core::stuff::api_error::ApiResult;
 use rlune_core::stuff::schema::SingleUuid;
 use rlune_macros::get;
-use rlune_macros::post;
 use tracing::info;
 use url::Url;
 
@@ -133,7 +132,7 @@ pub async fn accept(path: Path<SingleUuid>) -> ApiResult<Redirect> {
     .one()
     .await?;
 
-    let mut redirect_uri = Url::parse(&*redirect_uri).map_err(ApiError::map_server_error(
+    let mut redirect_uri = Url::parse(&redirect_uri).map_err(ApiError::map_server_error(
         "Invalid redirect uri stored in db",
     ))?;
 
@@ -161,7 +160,7 @@ pub async fn deny(path: Path<SingleUuid>) -> ApiResult<Redirect> {
     .one()
     .await?;
 
-    let mut redirect_uri = Url::parse(&*redirect_uri).map_err(ApiError::map_server_error(
+    let mut redirect_uri = Url::parse(&redirect_uri).map_err(ApiError::map_server_error(
         "Invalid redirect uri stored in db",
     ))?;
 
@@ -171,5 +170,5 @@ pub async fn deny(path: Path<SingleUuid>) -> ApiResult<Redirect> {
         query.append_pair("state", &open_request.state);
     }
 
-    Ok(Redirect::temporary(&redirect_uri.as_str()))
+    Ok(Redirect::temporary(redirect_uri.as_str()))
 }

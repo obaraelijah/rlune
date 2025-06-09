@@ -12,13 +12,20 @@ pub struct ModuleSet<M> {
 pub type OwnedModulesSet = ModuleSet<Box<dyn DynModule>>;
 pub type LeakedModuleSet = ModuleSet<&'static dyn DynModule>;
 
-impl<P> ModuleSet<P> {
+impl<M> Default for ModuleSet<M> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<M> ModuleSet<M> {
     pub fn new() -> Self {
         Self {
             set: HashMap::with_hasher(BuildXorHasher),
         }
     }
 }
+
 impl OwnedModulesSet {
     pub fn insert<T: Module>(&mut self, value: T) -> Option<Box<T>> {
         self.set

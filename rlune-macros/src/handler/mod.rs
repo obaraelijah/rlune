@@ -54,7 +54,7 @@ pub fn handler(
         .or_else(|| positional.next())
         .unwrap();
     let core_crate = match keyword.remove(&Ident::new("core_crate", Span::call_site())) {
-        None => quote! { ::rlune::core },
+        None => quote! { ::galvyn::core },
         Some(value) => {
             let literal = match &value {
                 TokenTree::Literal(literal) => Some(literal.to_string()),

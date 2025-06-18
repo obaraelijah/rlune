@@ -1,7 +1,8 @@
 //! [`RluneRouter`] extension trait
 
-use crate::openapi::metadata::OpenapiMetadata;
 use rlune_core::RluneRouter;
+
+use crate::openapi::metadata::OpenapiMetadata;
 
 /// Extension trait for [`RluneRouter`]
 ///

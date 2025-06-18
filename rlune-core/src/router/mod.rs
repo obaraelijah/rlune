@@ -26,7 +26,7 @@ pub struct RluneRouter {
 
     /// The underlying axum router
     router: Router,
-    
+
     /// Route metadata implicitly added to all routes added to this router
     extensions: RouteMetadataSet,
 }

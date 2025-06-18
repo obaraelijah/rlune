@@ -1,5 +1,4 @@
 use std::mem;
-use std::sync::OnceLock;
 
 use axum::http::Method;
 use openapiv3::Components;
@@ -18,60 +17,16 @@ use openapiv3::Schema;
 use openapiv3::SchemaKind;
 use openapiv3::StatusCode;
 use rlune_core::re_exports::schemars;
-use rlune_core::router::{RluneRoute, RouteMetadata};
+use rlune_core::router::RluneRoute;
 use rlune_core::schema_generator::SchemaGenerator;
 use rlune_core::RluneRouter;
 use tracing::debug;
 use tracing::warn;
 
 use crate::get_routes;
+use crate::openapi::OpenapiMetadata;
 
-/// Extension trait for [`RluneRouter`]
-///
-/// It provides convenient methods for adding openapi related metadata
-/// to a route. (For example tags)
-pub trait OpenapiRouterExt {
-    /// Adds a tag to all handlers in this router
-    fn openapi_tag(self, tag: &'static str) -> Self;
-
-    /// Creates a new router with a tag
-    ///
-    /// (Shorthand for `RluneRouter::new().openapi_tag(...)`)
-    fn with_openapi_tag(tag: &'static str) -> Self;
-}
-
-/// Openapi related [`RouteMetadata`]
-#[derive(Debug, Clone, Default)]
-pub struct OpenapiMetadata {
-    pub tags: Vec<&'static str>,
-}
-
-impl RouteMetadata for OpenapiMetadata {
-    fn merge(&mut self, other: &Self) {
-        for tag in &other.tags {
-            if !self.tags.contains(tag) {
-                self.tags.push(tag);
-            }
-        }
-    }
-}
-
-impl OpenapiRouterExt for RluneRouter {
-    fn openapi_tag(self, tag: &'static str) -> Self {
-        self.metadata(OpenapiMetadata { tags: vec![tag] })
-    }
-
-    fn with_openapi_tag(tag: &'static str) -> Self {
-        Self::new().openapi_tag(tag)
-    }
-}
-
-pub fn get_openapi() -> &'static OpenAPI {
-    static OPENAPI: OnceLock<OpenAPI> = OnceLock::new();
-    OPENAPI.get_or_init(generate_openapi)
-}
-
-fn generate_openapi() -> OpenAPI {
+pub fn generate_openapi() -> OpenAPI {
     let mut schemas = SchemaGenerator::new();
     let mut paths = Paths::default();
 

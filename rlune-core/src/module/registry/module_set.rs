@@ -81,6 +81,7 @@ fn downcast_ref<T: Module>(module: &dyn DynModule) -> &T {
 }
 
 struct BuildXorHasher;
+
 impl BuildHasher for BuildXorHasher {
     type Hasher = XorHasher;
 
